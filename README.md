@@ -1,4 +1,4 @@
-# PopPulse
+# CineMatch
 
 ## Notes to Group Members
 
