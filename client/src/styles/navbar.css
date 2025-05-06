@@ -1,0 +1,71 @@
+/* navbar.css */
+.navbar {
+  width: 100%;
+  padding: 0.75rem 2rem;
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+  left: 0;
+}
+
+.navbar + .main-content {
+  margin-top: 4rem; /* Ensure content isn't overlapped by the fixed navbar */
+}
+
+.nav-brand {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #e50914;
+  cursor: pointer;
+}
+
+.nav-center {
+  flex: 1;
+  margin: 0 2rem;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: #222;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  margin-left: 0.5rem;
+  flex: 1;
+}
+
+.search-icon {
+  color: #999;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.nav-icon {
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-icon:hover {
+  color: #e50914;
+}
+
+.profile-icon {
+  font-size: 1.8rem;
+}
