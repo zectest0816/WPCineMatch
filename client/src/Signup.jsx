@@ -30,13 +30,13 @@ function Signup() {
         backgroundPosition: "center",
       }}
     >
-      {/* Title and Slogan */}
+
       <div className="title-container">
         <h1>
           <span className="cine">Cine</span>
           <span className="match">Match</span>
         </h1>
-        <p className="slogan">Your ultimate movie matchmaker</p> {/* Slogan below title */}
+        <p className="slogan">Your ultimate movie matchmaker</p> 
       </div>
 
       <div className="signup-box signup-box-shift">
@@ -102,3 +102,4 @@ function Signup() {
 }
 
 export default Signup;
+
