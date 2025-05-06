@@ -6,6 +6,7 @@ import {
   fetchMovieTrailer,
   IMAGE_BASE_URL,
 } from "./api.js";
+import { useNavigate } from "react-router-dom";
 
 // Styled Components
 const StyledInput = styled.input`
@@ -72,6 +73,74 @@ const MovieWrapper = styled.div`
   overflow: hidden;
 `;
 
+// favourite movie heart button
+const HeartButton = styled.button`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: white;
+  z-index: 2;
+  cursor: pointer;
+
+  &:hover {
+    color: red;
+  }
+`;
+
+const FavouriteButton = styled.button`
+  padding: 12px;
+  border-radius: 30px;
+  background-color: #141414;
+  color: #fff;
+  border: 1px solid #444;
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #222;
+    color: red;
+  }
+`;
+
+// watch later star button
+const WatchLaterButton = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: ${({ $isAdded }) => ($isAdded ? "gold" : "white")};
+  z-index: 2;
+  cursor: pointer;
+
+  &:hover {
+    color: gold;
+  }
+`;
+
+
+
+const GoWatchLaterButton = styled.button`
+  padding: 12px;
+  border-radius: 30px;
+  background-color: #141414;
+  color: #fff;
+  border: 1px solid #444;
+  font-size: 1rem;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #222;
+    color: #ffc107; /* Yellow or your preferred highlight */
+  }
+`;
+
+
+
 const Home = () => {
   const [movies, setMovies] = useState([]);
   const [query, setQuery] = useState("");
@@ -80,20 +149,159 @@ const Home = () => {
   const [sortBy, setSortBy] = useState("");
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [trailerKey, setTrailerKey] = useState("");
+  const [watchLaterMovieIds, setWatchLaterMovieIds] = useState([]);
+  const [favouriteMovieIds, setFavouriteIds] = useState([]);
+  const navigate = useNavigate();
 
+  // Fetch movies on filters change
   useEffect(() => {
     fetchMovies(query, genre, year, sortBy).then(setMovies);
   }, [query, genre, year, sortBy]);
 
+  // Show movie details (modal or page)
   async function showMovieDetails(movieId) {
-    // Fetch movie details and trailer
     const movie = await fetchMovieDetails(movieId);
     const trailer = await fetchMovieTrailer(movieId);
-
-    // Set state with the movie and trailer information
     setSelectedMovie(movie);
     setTrailerKey(trailer || "");
   }
+
+  // favourite
+  const toggleFavourite = async (movie, event) => {
+    event.stopPropagation();
+    const userId = localStorage.getItem("userEmail");
+    if (!userId) {
+      alert("Please log in to modify Favourite list.");
+      return;
+    }
+  
+    const isAdded = favouriteMovieIds.includes(movie.id);
+  
+    try {
+      if (isAdded) {
+        // Remove from favourite
+        const response = await fetch(`http://localhost:3001/api/favourite/${movie.id}?userId=${userId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId }),
+        });
+  
+        if (!response.ok) throw new Error("Failed to remove movie");
+  
+        const updated = favouriteMovieIds.filter(id => id !== movie.id);
+        setFavouriteIds(updated);
+        localStorage.setItem("favouriteMovie", JSON.stringify(updated));
+      } else {
+        // Add to favourite
+        const response = await fetch("http://localhost:3001/api/favourite/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+          }),
+        });
+  
+        if (!response.ok) throw new Error("Failed to add movie");
+  
+        const updated = [...favouriteMovieIds, movie.id];
+        setFavouriteIds(updated);
+        localStorage.setItem("favouriteMovie", JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error("Favourite toggle error:", err);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+  // Fetch initial favorites on mount
+    useEffect(() => {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) return;
+
+      fetch(`http://localhost:3001/api/favourite/list/${userId}`)
+        .then((response) => {
+          if (!response.ok) throw new Error("Failed to fetch favorites");
+          return response.json();
+        })
+        .then((data) => {
+          const ids = data.map((fav) => fav.movieId);
+          setFavouriteIds(ids);
+          localStorage.setItem("favouriteMovie", JSON.stringify(ids)); // Optional
+        })
+        .catch((error) => console.error("Fetch favorites error:", error));
+    }, []);
+
+
+  
+  // watch later
+  const toggleWatchLater = async (movie, event) => {
+    event.stopPropagation();
+    const userId = localStorage.getItem("userEmail");
+    if (!userId) {
+      alert("Please log in to modify Watch Later list.");
+      return;
+    }
+  
+    const isAdded = watchLaterMovieIds.includes(movie.id);
+  
+    try {
+      if (isAdded) {
+        const response = await fetch(`http://localhost:3001/api/watchlater/${movie.id}?userId=${userId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!response.ok) throw new Error("Failed to remove movie");
+  
+        const updated = watchLaterMovieIds.filter(id => id !== movie.id);
+        setWatchLaterMovieIds(updated);
+        localStorage.setItem("watchLaterMovies", JSON.stringify(updated));
+      } else {
+        const response = await fetch("http://localhost:3001/api/watchlater/add", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to add movie");
+  
+        const updated = [...watchLaterMovieIds, movie.id];
+        setWatchLaterMovieIds(updated);
+        localStorage.setItem("watchLaterMovies", JSON.stringify(updated));
+      }
+    } catch (err) {
+      console.error("Watch Later toggle error:", err);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    const userId = localStorage.getItem("userEmail");
+    if (!userId) return;
+  
+    fetch(`http://localhost:3001/api/watchlater/list/${userId}`)
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to fetch watch later");
+        return response.json();
+      })
+      .then((data) => {
+        const ids = data.map((item) => item.movieId);
+        setWatchLaterMovieIds(ids);
+        localStorage.setItem("watchLaterMovies", JSON.stringify(ids));
+      })
+      .catch((error) => console.error("Fetch watch later error:", error));
+  }, []);
+  
 
   return (
     <>
@@ -145,6 +353,14 @@ const Home = () => {
               <option value="vote_average.desc">Rating</option>
               <option value="release_date.desc">Release Date</option>
             </StyledSelect>
+            <FavouriteButton
+            className="btn btn-outline-danger mb-3"
+            onClick={() => navigate("/favourite")}
+            > ❤️ View My Favourites
+            </FavouriteButton>
+            <GoWatchLaterButton onClick={() => navigate("/watchlater")}>
+            ⏳ View Watch Later
+            </GoWatchLaterButton>
           </div>
         </div>
       </div>
@@ -162,10 +378,22 @@ const Home = () => {
               return (
                 <div key={movie.id} className="col-6 col-sm-4 col-md-3">
                   <MovieCard onClick={() => showMovieDetails(movie.id)}>
-                    <MovieWrapper>
-                      <MoviePoster src={posterUrl} alt={movie.title} />
-                      <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
-                    </MovieWrapper>
+                  <MovieWrapper>
+                  <HeartButton 
+                    $isAdded={favouriteMovieIds.includes(movie.id)}
+                    onClick={(e) => toggleFavourite(movie, e)}
+                  >
+                    {favouriteMovieIds.includes(movie.id) ? "❤️" : "🤍"}
+                  </HeartButton>
+                  <WatchLaterButton
+                      $isAdded={watchLaterMovieIds.includes(movie.id)}
+                      onClick={(e) => toggleWatchLater(movie, e)}
+                    >
+                      {watchLaterMovieIds.includes(movie.id) ? "★" : "☆"}
+                    </WatchLaterButton>
+                    <MoviePoster src={posterUrl} alt={movie.title} />
+                    <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
+                  </MovieWrapper>
                   </MovieCard>
                 </div>
               );

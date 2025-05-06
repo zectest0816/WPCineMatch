@@ -14,6 +14,7 @@ const Login = () => {
                 console.log(result)
                 if (result.data === "Success") {
                     navigate('/home')
+                    localStorage.setItem("userEmail", email);
                 }
             })
             .catch(err => console.log(err))
