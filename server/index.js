@@ -17,15 +17,16 @@ app.post('/login', (req, res) => {
         .then(user => {
             if (user) {
                 if (user.password === password) {
-                    res.json("Success")
+                    res.status(200).json({ status: "Success" });
                 } else {
-                    res.json("The password is incorrect")
+                    res.status(401).json({ error: "Invalid password" });
                 }
             } else {
-                res.json("No record existed")
+                res.status(404).json({ error: "User not found" });
             }
         })
-})
+        .catch(err => res.status(500).json({ error: err.message }));
+});
 
 app.post('/register', (req, res) => {
     CinematchModel.create(req.body)

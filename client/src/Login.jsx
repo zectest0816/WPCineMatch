@@ -11,13 +11,18 @@ const Login = () => {
         e.preventDefault()
         axios.post('http://localhost:3001/login', { email, password })
             .then(result => {
-                console.log(result)
-                if (result.data === "Success") {
-                    navigate('/home')
+                // Server should return JSON response
+                if (result.data.status === "Success") {
                     localStorage.setItem("userEmail", email);
+                    navigate('/home');
+                } else {
+                    alert(result.data.error);
                 }
             })
-            .catch(err => console.log(err))
+            .catch(err => {
+                console.error(err);
+                alert("Cannot connect to server. Make sure backend is running!");
+            })
     }
 
     return (

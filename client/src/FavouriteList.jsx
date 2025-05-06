@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import Navbar from "./Navbar";
+import { useNavigate } from "react-router-dom";
 import {
-  fetchMovies,
   fetchMovieDetails,
   fetchMovieTrailer,
   IMAGE_BASE_URL,
 } from "./api.js";
 
-// Styled Components (reused from Home)
+// Styled Components
+const MovieContainer = styled.div`
+  position: relative;
+  margin: 8px;
+`;
+
 const MovieCard = styled.div`
   cursor: pointer;
   border-radius: 10px;
@@ -40,175 +46,189 @@ const MovieTitleOverlay = styled.div`
   font-size: 1rem;
 `;
 
-const MovieWrapper = styled.div`
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
+const RemoveButton = styled.button`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  text-align: center;
+  line-height: 32px;
+  cursor: pointer;
+  z-index: 2;
+
+  &:hover {
+    background: rgba(255, 0, 0, 0.8);
+  }
 `;
 
-const StyledInput = styled.input`
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  width: 100%;
-`;
-
-const StyledSelect = styled.select`
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+const GenreGroup = styled.div`
+  margin-bottom: 40px;
 `;
 
 const FavouriteList = () => {
   const [favourites, setFavourites] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [movies, setMovies] = useState([]);
-  const [query, setQuery] = useState("");
-  const [genre, setGenre] = useState("");
-  const [year, setYear] = useState("");
-  const [sortBy, setSortBy] = useState("");
   const [trailerKey, setTrailerKey] = useState("");
+  const [groupedMovies, setGroupedMovies] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+  const email = localStorage.getItem("userEmail");
 
-  const handleMovieClick = (movie) => {
-    setSelectedMovie(movie);
+  const groupByGenre = (movies) => {
+    const grouped = {};
+    movies.forEach((movie) => {
+      if (movie.genres && Array.isArray(movie.genres)) {
+        movie.genres.forEach((genre) => {
+          const genreName = genre.name;
+          if (!grouped[genreName]) grouped[genreName] = [];
+          grouped[genreName].push(movie);
+        });
+      }
+    });
+    return grouped;
   };
 
   useEffect(() => {
-    fetchMovies(query, genre, year, sortBy).then(setMovies);
-  }, [query, genre, year, sortBy]);
+    const fetchFavourites = async () => {
+      if (!email) return;
 
-  const email = localStorage.getItem("userEmail");
-  if (!email) return;
+      try {
+        const response = await fetch(
+          `http://localhost:3001/api/favourite/list/${email}`
+        );
+        if (!response.ok) throw new Error("Failed to fetch favourites");
+        
+        const favouriteData = await response.json();
+        
+        const moviesWithDetails = await Promise.all(
+          favouriteData.map(async (item) => {
+            const details = await fetchMovieDetails(item.movieId);
+            return {
+              ...item,
+              ...details,
+              genres: details.genres || [],
+            };
+          })
+        );
 
-  useEffect(() => {
-    fetch(`http://localhost:3001/api/favourite/list/${email}`) // ✅ Corrected
-      .then((response) => {
-        if (!response.ok) throw new Error("Failed to fetch favorites");
-        return response.json();
-      })
-      .then((data) => setFavourites(data))
-      .catch((error) => console.error("Error fetching favourites:", error));
+        setFavourites(moviesWithDetails);
+        setGroupedMovies(groupByGenre(moviesWithDetails));
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    };
+
+    fetchFavourites();
   }, [email]);
 
-  const handleRemoveFavourite = (movieId) => {
-    const email = localStorage.getItem("userEmail");
-  
+  const handleRemoveFavourite = async (movieId) => {
     if (!email) {
-      alert("You must be logged in to remove favourites.");
+      alert("You must be logged in to modify favorites.");
       return;
     }
 
-    fetch(`http://localhost:3001/api/favourite/${movieId}?userId=${email}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        // Remove from local state
-        setFavourites((prev) => prev.filter((fav) => fav.movieId !== movieId));
-      })
-      .catch((error) => console.error("Error removing favourite:", error));
-    
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/favourite/${movieId}?userId=${email}`,
+        { method: "DELETE" }
+      );
+      if (!response.ok) throw new Error("Failed to remove movie");
+
+      setFavourites((prev) => prev.filter((movie) => movie.id !== movieId));
+      setGroupedMovies(groupByGenre(favourites.filter((movie) => movie.id !== movieId)));
+    } catch (error) {
+      console.error("Error removing favorite:", error);
+    }
   };
-  
 
   async function showMovieDetails(movieId) {
-    const movie = await fetchMovieDetails(movieId);
-    const trailer = await fetchMovieTrailer(movieId);
-    setSelectedMovie(movie);
-    setTrailerKey(trailer || "");
+    try {
+      const movie = await fetchMovieDetails(movieId);
+      const trailer = await fetchMovieTrailer(movieId);
+      setSelectedMovie(movie);
+      setTrailerKey(trailer || "");
+    } catch (error) {
+      console.error("Error fetching movie details:", error);
+    }
   }
 
   return (
     <>
-      {/* Navbar */}
-      <nav className="navbar navbar-dark bg-black border-bottom border-secondary">
-        <div className="container-fluid">
-          <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
-            🎬 MovieExplorer
-          </a>
-        </div>
-      </nav>
+      <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
+        <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
+          🎬 MovieExplorer
+        </a>
+        <button
+          className="btn btn-outline-light ms-auto"
+          onClick={() => navigate("/search")}
+        >
+          🔍 Search
+        </button>
+      </Navbar>
 
-      {/* Filters */}
-      <div className="container my-4">
-        <div className="row g-3 align-items-center justify-content-between">
+      <div className="container mt-4">
+        <div className="row justify-content-center">
           <div className="col-md-6">
-            <StyledInput
+            <input
               type="text"
-              placeholder="Search for movies..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              className="form-control bg-dark text-light"
+              placeholder="Search your favorites..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="col-md-6 d-flex gap-2">
-            <StyledSelect value={genre} onChange={(e) => setGenre(e.target.value)}>
-              <option value="">Genre</option>
-              <option value="28">Action</option>
-              <option value="35">Comedy</option>
-              <option value="18">Drama</option>
-            </StyledSelect>
-            <StyledSelect value={year} onChange={(e) => setYear(e.target.value)}>
-              <option value="">Year</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
-            </StyledSelect>
-            <StyledSelect value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="">Sort By</option>
-              <option value="popularity.desc">Popularity</option>
-              <option value="vote_average.desc">Rating</option>
-              <option value="release_date.desc">Release Date</option>
-            </StyledSelect>
-          </div>
         </div>
       </div>
 
-      {/* Movie Results */}
-      <div className="container">
-        <div className="row g-4">
-          {favourites.length === 0 ? (
-            <p className="text-white">You have no favourite movies yet.</p>
-          ) : (
-            favourites.map((movie) => {
-              const posterUrl = movie.poster_path
-                ? `${IMAGE_BASE_URL}${movie.poster_path}`
-                : "https://via.placeholder.com/300x400?text=No+Image";
-
-              return (
-                <div key={movie._id} className="col-6 col-sm-4 col-md-3">
-                  <MovieCard onClick={() => showMovieDetails(movie.movieId)}>
-                    <MovieWrapper>
-                      <MoviePoster src={posterUrl} alt={movie.title} />
-                      <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
-                    </MovieWrapper>
-                  </MovieCard>
-                  <button
-                    className="btn btn-danger mt-2"
-                    onClick={() => handleRemoveFavourite(movie.movieId)}
-                  >
-                    Remove from Favourites
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
+      <div className="container mt-5">
+        {favourites.length === 0 ? (
+          <p className="text-white text-center">Your favorites list is empty</p>
+        ) : (
+          Object.entries(groupedMovies).map(([genre, movies]) => (
+            <GenreGroup key={genre}>
+              <h3 className="text-white mb-3">{genre} Favorites</h3>
+              <div className="movie-row d-flex flex-wrap">
+                {movies
+                  .filter((movie) =>
+                    movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map((movie) => (
+                    <MovieContainer key={movie.id} className="col-6 col-md-3 mb-4">
+                      <MovieCard onClick={() => showMovieDetails(movie.id)}>
+                        <MoviePoster
+                          src={
+                            movie.poster_path
+                              ? `${IMAGE_BASE_URL}${movie.poster_path}`
+                              : "https://via.placeholder.com/300x400?text=No+Image"
+                          }
+                          alt={movie.title}
+                        />
+                        <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
+                        <RemoveButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFavourite(movie.id);
+                          }}
+                        >
+                          −
+                        </RemoveButton>
+                      </MovieCard>
+                    </MovieContainer>
+                  ))}
+              </div>
+            </GenreGroup>
+          ))
+        )}
       </div>
 
-      {/* Modal */}
       {selectedMovie && (
-        <div
-          className="modal fade show"
-          id="movieModal"
-          tabIndex="-1"
-          aria-hidden="true"
-          style={{ display: "block" }}
-        >
+        <div className="modal fade show" style={{ display: "block" }}>
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content bg-dark text-white">
               <div className="modal-header border-secondary">
@@ -216,9 +236,7 @@ const FavouriteList = () => {
                 <button
                   type="button"
                   className="btn-close btn-close-white"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                  onClick={() => setSelectedMovie(null)} // Reset the modal
+                  onClick={() => setSelectedMovie(null)}
                 ></button>
               </div>
               <div className="modal-body d-flex flex-column flex-md-row gap-3">
@@ -240,20 +258,16 @@ const FavouriteList = () => {
                   <p>
                     <strong>Rating:</strong> {selectedMovie.vote_average}
                   </p>
-                  <div className="mt-3">
-                    {trailerKey ? (
-                      <iframe
-                        width="100%"
-                        height="300"
-                        src={`https://www.youtube.com/embed/${trailerKey}`}
-                        frameBorder="0"
-                        allowFullScreen
-                        title="Trailer"
-                      ></iframe>
-                    ) : (
-                      <p>No trailer available.</p>
-                    )}
-                  </div>
+                  {trailerKey && (
+                    <iframe
+                      width="100%"
+                      height="300"
+                      src={`https://www.youtube.com/embed/${trailerKey}`}
+                      frameBorder="0"
+                      allowFullScreen
+                      title="Trailer"
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -265,3 +279,4 @@ const FavouriteList = () => {
 };
 
 export default FavouriteList;
+         

@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import Navbar from "./Navbar";
+import { useNavigate } from "react-router-dom";
 import {
-  fetchMovies,
   fetchMovieDetails,
   fetchMovieTrailer,
   IMAGE_BASE_URL,
 } from "./api.js";
 
-// Styled Components (reused from Home)
+// Styled Components
+const MovieContainer = styled.div`
+  position: relative;
+  margin: 8px;
+`;
+
 const MovieCard = styled.div`
   cursor: pointer;
   border-radius: 10px;
@@ -34,29 +40,14 @@ const MovieTitleOverlay = styled.div`
   left: 0;
   right: 0;
   padding: 10px;
-  background: linear-gradient(to top, rgba(20, 20, 20, 0.9), rgba(20, 20, 20, 0));
+  background: linear-gradient(
+    to top,
+    rgba(20, 20, 20, 0.9),
+    rgba(20, 20, 20, 0)
+  );
   color: white;
   font-weight: bold;
   font-size: 1rem;
-`;
-
-const MovieWrapper = styled.div`
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-`;
-
-const StyledInput = styled.input`
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  width: 100%;
-`;
-
-const StyledSelect = styled.select`
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
 `;
 
 const RemoveButton = styled.button`
@@ -80,90 +71,223 @@ const RemoveButton = styled.button`
   }
 `;
 
+const GenreGroup = styled.div`
+  margin-bottom: 40px;
+`;
+
+const genres = [
+  { id: 28, name: "Action" },
+  { id: 35, name: "Comedy" },
+  { id: 27, name: "Horror" },
+  { id: 10749, name: "Romance" },
+  { id: 16, name: "Animation" },
+];
 
 const WatchLaterList = () => {
   const [watchLater, setWatchLater] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [query, setQuery] = useState("");
-  const [genre, setGenre] = useState("");
-  const [year, setYear] = useState("");
-  const [sortBy, setSortBy] = useState("");
   const [trailerKey, setTrailerKey] = useState("");
-
+  const [groupedMovies, setGroupedMovies] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
   const email = localStorage.getItem("userEmail");
 
+  const groupByGenre = (movies) => {
+    const grouped = {};
+    movies.forEach((movie) => {
+      if (movie.genres && Array.isArray(movie.genres)) {
+        movie.genres.forEach((genre) => {
+          const genreName = genre.name;
+          if (!grouped[genreName]) grouped[genreName] = [];
+          grouped[genreName].push(movie);
+        });
+      }
+    });
+    return grouped;
+  };
+
   useEffect(() => {
-    if (!email) return;
-    
-    fetch(`http://localhost:3001/api/watchlater/list/${email}`)
-      .then((response) => {
+    const fetchWatchLaterMovies = async () => {
+      if (!email) return;
+
+      try {
+        const response = await fetch(
+          `http://localhost:3001/api/watchlater/list/${email}`
+        );
         if (!response.ok) throw new Error("Failed to fetch watch later");
-        return response.json();
-      })
-      .then((data) => setWatchLater(data))
-      .catch((error) => console.error("Error fetching watch later:", error));
+        
+        const watchLaterData = await response.json();
+        
+        // Fetch complete movie details for each watch later item
+        const moviesWithDetails = await Promise.all(
+          watchLaterData.map(async (item) => {
+            const details = await fetchMovieDetails(item.movieId);
+            return {
+              ...item,
+              ...details,
+              genres: details.genres || [],
+            };
+          })
+        );
+
+        setWatchLater(moviesWithDetails);
+        setGroupedMovies(groupByGenre(moviesWithDetails));
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    };
+
+    fetchWatchLaterMovies();
   }, [email]);
 
-  const handleRemoveWatchLater = (movieId) => {
+  const handleRemoveWatchLater = async (movieId) => {
     if (!email) {
       alert("You must be logged in to modify Watch Later list.");
       return;
     }
 
-    fetch(`http://localhost:3001/api/watchlater/${movieId}?userId=${email}`, {
-      method: "DELETE",
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        return response.json();
-      })
-      .then(() => {
-        setWatchLater((prev) => prev.filter((item) => item.movieId !== movieId));
-      })
-      .catch((error) => console.error("Error removing watch later:", error));
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/watchlater/${movieId}?userId=${email}`,
+        { method: "DELETE" }
+      );
+      if (!response.ok) throw new Error("Failed to remove movie");
+
+      setWatchLater((prev) => prev.filter((movie) => movie.id !== movieId));
+      setGroupedMovies(groupByGenre(watchLater.filter((movie) => movie.id !== movieId)));
+    } catch (error) {
+      console.error("Error removing watch later:", error);
+    }
   };
 
   async function showMovieDetails(movieId) {
-    const movie = await fetchMovieDetails(movieId);
-    const trailer = await fetchMovieTrailer(movieId);
-    setSelectedMovie(movie);
-    setTrailerKey(trailer || "");
+    try {
+      const movie = await fetchMovieDetails(movieId);
+      const trailer = await fetchMovieTrailer(movieId);
+      setSelectedMovie(movie);
+      setTrailerKey(trailer || "");
+    } catch (error) {
+      console.error("Error fetching movie details:", error);
+    }
   }
 
   return (
     <>
-      {/* Navbar and Filters (same structure as FavouriteList.jsx) */}
-      
-      {/* Movie Results */}
-      <div className="container">
-        <div className="row g-4">
-          {watchLater.length === 0 ? (
-            <p className="text-white">You have no watch later movies yet.</p>
-          ) : (
-            watchLater.map((movie) => {
-              const posterUrl = movie.poster_path
-                ? `${IMAGE_BASE_URL}${movie.poster_path}`
-                : "https://via.placeholder.com/300x400?text=No+Image";
+      <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
+        <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
+          🎬 MovieExplorer
+        </a>
+        <button
+          className="btn btn-outline-light ms-auto"
+          onClick={() => navigate("/search")}
+        >
+          🔍 Search
+        </button>
+      </Navbar>
 
-              return (
-                <div key={movie._id} className="col-6 col-sm-4 col-md-3">
-                  <MovieCard onClick={() => showMovieDetails(movie.movieId)}>
-                    <MovieWrapper>
-                      <RemoveButton onClick={() => handleRemoveWatchLater(movie.movieId)}>
-                        −
-                      </RemoveButton>
-                      <MoviePoster src={posterUrl} alt={movie.title} />
-                      <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
-                    </MovieWrapper>
-                  </MovieCard>
-                </div>
-              );
-            })
-          )}
+      <div className="container mt-4">
+        <div className="row justify-content-center">
+          <div className="col-md-6">
+            <input
+              type="text"
+              className="form-control bg-dark text-light"
+              placeholder="Search your watch later..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Modal (same as FavouriteList.jsx) */}
+      <div className="container mt-5">
+        {watchLater.length === 0 ? (
+          <p className="text-white text-center">Your watch later list is empty</p>
+        ) : (
+          Object.entries(groupedMovies).map(([genre, movies]) => (
+            <GenreGroup key={genre}>
+              <h3 className="text-white mb-3">{genre} Movies</h3>
+              <div className="movie-row d-flex flex-wrap">
+                {movies
+                  .filter((movie) =>
+                    movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                  .map((movie) => (
+                    <MovieContainer key={movie.id} className="col-6 col-md-3 mb-4">
+                      <MovieCard onClick={() => showMovieDetails(movie.id)}>
+                        <MoviePoster
+                          src={
+                            movie.poster_path
+                              ? `${IMAGE_BASE_URL}${movie.poster_path}`
+                              : "https://via.placeholder.com/300x400?text=No+Image"
+                          }
+                          alt={movie.title}
+                        />
+                        <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
+                        <RemoveButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveWatchLater(movie.id);
+                          }}
+                        >
+                          −
+                        </RemoveButton>
+                      </MovieCard>
+                    </MovieContainer>
+                  ))}
+              </div>
+            </GenreGroup>
+          ))
+        )}
+      </div>
+
+      {/* Movie Details Modal */}
+      {selectedMovie && (
+        <div className="modal fade show" style={{ display: "block" }}>
+          <div className="modal-dialog modal-lg modal-dialog-centered">
+            <div className="modal-content bg-dark text-white">
+              <div className="modal-header border-secondary">
+                <h5 className="modal-title">{selectedMovie.title}</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => setSelectedMovie(null)}
+                ></button>
+              </div>
+              <div className="modal-body d-flex flex-column flex-md-row gap-3">
+                <img
+                  src={
+                    selectedMovie.poster_path
+                      ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
+                      : "https://via.placeholder.com/300x400?text=No+Image"
+                  }
+                  className="img-fluid"
+                  style={{ maxWidth: "300px", borderRadius: "8px" }}
+                  alt="Movie Poster"
+                />
+                <div>
+                  <p>{selectedMovie.overview}</p>
+                  <p>
+                    <strong>Release Date:</strong> {selectedMovie.release_date}
+                  </p>
+                  <p>
+                    <strong>Rating:</strong> {selectedMovie.vote_average}
+                  </p>
+                  {trailerKey && (
+                    <iframe
+                      width="100%"
+                      height="300"
+                      src={`https://www.youtube.com/embed/${trailerKey}`}
+                      frameBorder="0"
+                      allowFullScreen
+                      title="Trailer"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

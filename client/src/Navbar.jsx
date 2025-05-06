@@ -53,8 +53,9 @@ const Navbar = () => {
         />
         <FaUserCircle
           className="nav-icon profile-icon"
-          title="Profile"
+          title="Profile & Saved Items"
           onClick={() => navigate("/profile")}
+          style={{ color: "#00b4d8" }}  // Add accent color
         />
       </div>
     </div>

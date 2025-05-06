@@ -8,6 +8,7 @@ import {
 } from "./api.js";
 import "./styles/home.js";
 import { useNavigate } from "react-router-dom";
+import styled from 'styled-components';
 
 // Styled Components
 const StyledInput = styled.input`
@@ -81,6 +82,53 @@ const genres = [
   { id: 16, name: "Animation" },
 ];
 
+// Add this styled component definition near other styled components
+const ActionButton = styled.button`
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s ease;
+`;
+
+const HeartButton = styled.button`
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: ${props => props.$isAdded ? "red" : "white"};
+  z-index: 2;
+  cursor: pointer;
+
+  &:hover {
+    color: red;
+  }
+`;
+
+
+const WatchLaterButton = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: ${props => props.$isAdded ? "gold" : "white"};
+  z-index: 2;
+  cursor: pointer;
+
+  &:hover {
+    color: gold;
+  }
+`;
+
+const MovieContainer = styled.div`
+  position: relative;
+  margin: 8px;
+`;
 
 const Home = () => {
   const [movies, setMovies] = useState([]);
@@ -293,14 +341,6 @@ const Home = () => {
               >
                 ℹ More Info
               </button>
-              <FavouriteButton
-            className="btn btn-outline-danger mb-3"
-            onClick={() => navigate("/favourite")}
-            > ❤️ View My Favourites
-            </FavouriteButton>
-            <GoWatchLaterButton onClick={() => navigate("/watchlater")}>
-            ⏳ View Watch Later
-            </GoWatchLaterButton>
             </div>
           </div>
         </div>
@@ -312,31 +352,32 @@ const Home = () => {
           <div key={genre} className="mb-4">
             <h3 className="text-white mb-3">{genre} Movies</h3>
             <div className="movie-row">
-              {movies.map((movie) => (
-                <img
-                  key={movie.id}
-                  className="movie-thumbnail"
-                  src={
-                    movie.poster_path
-                      ? `${IMAGE_BASE_URL}${movie.poster_path}`
-                      : "https://via.placeholder.com/300x400?text=No+Image"
-                  }
-                  alt={movie.title}
-                  onClick={() => showMovieDetails(movie.id)} // Display movie details on click
-                />
-              ))}
+            {movies.map((movie) => (
+            <MovieContainer key={movie.id}>
+              <img
+                className="movie-thumbnail"
+                src={
+                  movie.poster_path 
+                    ? `${IMAGE_BASE_URL}${movie.poster_path}`
+                    : "https://via.placeholder.com/300x400?text=No+Image"
+                }
+                alt={movie.title}
+                onClick={() => showMovieDetails(movie.id)}
+              />
               <HeartButton 
-                    $isAdded={favouriteMovieIds.includes(movie.id)}
-                    onClick={(e) => toggleFavourite(movie, e)}
-                  >
-                    {favouriteMovieIds.includes(movie.id) ? "❤️" : "🤍"}
-                  </HeartButton>
-                  <WatchLaterButton
-                      $isAdded={watchLaterMovieIds.includes(movie.id)}
-                      onClick={(e) => toggleWatchLater(movie, e)}
-                    >
-                      {watchLaterMovieIds.includes(movie.id) ? "★" : "☆"}
-                    </WatchLaterButton>
+                $isAdded={favouriteMovieIds.includes(movie.id)}
+                onClick={(e) => toggleFavourite(movie, e)}
+              >
+                {favouriteMovieIds.includes(movie.id) ? "❤️" : "🤍"}
+              </HeartButton>
+              <WatchLaterButton
+                $isAdded={watchLaterMovieIds.includes(movie.id)}
+                onClick={(e) => toggleWatchLater(movie, e)}
+              >
+                {watchLaterMovieIds.includes(movie.id) ? "★" : "☆"}
+              </WatchLaterButton>
+            </MovieContainer>
+            ))}
             </div>
           </div>
         ))}
