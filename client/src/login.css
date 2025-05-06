@@ -9,7 +9,6 @@
   align-items: center;
 }
 
-  /* Login card container */
   .login-box {
     background-color: rgba(255, 255, 255, 0.288);
     padding: 2rem;
@@ -23,16 +22,15 @@
   }
 
   .login-box-shift {
-    margin-left: 900px; /* Adjust this value */
+    margin-left: 900px;
    
   }
   
   .login-box-custom {
-    width: 450px; /* Or whatever size you want */
-    max-width: 100%; /* Optional: responsive fallback */
+    width: 450px; 
+    max-width: 100%; 
   }
   
-  /* Heading */
   .login-box h2 {
     text-align: center;
     margin-bottom: 1.0rem;
@@ -50,83 +48,70 @@
     font-weight: 200;
     color: #ffffff;
     letter-spacing: 0.5px;
-    margin-bottom: 0.15rem; /* Small gap between label and input */
+    margin-bottom: 0.15rem;
     display: block;
   }
-  
   
   .login-box .form-control {
     margin-bottom: 1.0rem;
     padding: 0.5rem 0.75rem;
     font-size: 1rem;
-    border-radius: 10px !important; /* Apply border-radius with !important */
+    border-radius: 10px !important; 
     background-color: rgba(255, 255, 255, 0.509);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.509);
-    
+    border: 1px solid rgba(255, 255, 255, 0.509);  
   }
   
-/* Password input box specific spacing */
 .login-box .form-control[type="password"] {
-    margin-bottom: 2.5rem; /* Add more space below the password field */
+    margin-bottom: 2.5rem; 
   }
   
-  /* Button */
-/* Button */
 .login-box .btn {
     margin-top: 1rem;
     padding: 0.75rem;
     font-size: 1.1rem;
-    border-radius: 25px !important; /* Rounded corners for a smooth look */
-    background: linear-gradient(135deg, #033205d6, #81c784e0); /* Green gradient */
-    color: #fff; /* White text color */
-    border: none; /* Remove border */
-    cursor: pointer; /* Pointer cursor on hover */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
-    transition: all 0.3s ease; /* Smooth transition on hover */
+    border-radius: 25px !important; 
+    background: linear-gradient(135deg, #033205d6, #81c784e0);
+    color: #fff; 
+    border: none; 
+    cursor: pointer; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); 
+    transition: all 0.3s ease; 
   }
   
-  /* Hover Effect */
   .login-box .btn:hover {
-    background: linear-gradient(135deg, #0a9c14d6, #8ae28fe0); /* Invert the gradient on hover */
-    transform: translateY(-3px); /* Slight raise effect */
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Deeper shadow on hover */
+    background: linear-gradient(135deg, #0a9c14d6, #8ae28fe0); 
+    transform: translateY(-3px); 
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); 
   }
   
-  /* Sign Up Button */
 .login-box .btn-default {
     margin-top: 1rem;
     padding: 0.75rem;
     font-size: 1.1rem;
-    border-radius: 25px; /* Rounded corners for smooth look */
-    background: linear-gradient(135deg, #b02e2e, #cb7777); /* Red gradient */
-    color: #fff; /* White text color */
-    border: none; /* Remove border */
-    cursor: pointer; /* Pointer cursor on hover */
+    border-radius: 25px; 
+    background: linear-gradient(135deg, #b02e2e, #cb7777); 
+    color: #fff; 
+    border: none; 
+    cursor: pointer; 
     margin-top: 0.5rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
-    transition: all 0.3s ease; /* Smooth transition on hover */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); 
+    transition: all 0.3s ease; 
   }
   
-  /* Hover Effect */
   .login-box .btn-default:hover {
-    background: linear-gradient(135deg, #e82b2b, #d97171); /* Invert the gradient on hover */
-    transform: translateY(-3px); /* Slight raise effect */
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Deeper shadow on hover */
+    background: linear-gradient(135deg, #e82b2b, #d97171); 
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
   }
-  
-/* Text for 'Already Have an Account' */
+
 .login-box p {
-    color: #fff; /* Set text color to white */
-    font-size: 0.90rem; /* Adjust font size if needed */
-    text-align: center; /* Center-align the text */
-    margin-top: 0.5rem; /* Add space above the text */
-   
+    color: #fff; 
+    font-size: 0.90rem; 
+    text-align: center; 
+    margin-top: 0.5rem;
   }
-  
-  
-  
-  /* Alert styling */
+
   .alert {
     margin-bottom: 1rem;
     font-size: 0.9rem;
@@ -134,40 +119,39 @@
     text-align: center;
   }
 
-  /* Title on the left-center of the page */
 .title-container {
-    position: fixed;  /* Fix the title to the left side of the page */
-    top: 50%;  /* Center the title vertically */
-    left: 130px;  /* Position it 20px from the left edge */
-    transform: translateY(-50%);  /* Adjust the vertical centering */
-    z-index: 1000;  /* Ensure it's above other elements */
+    position: fixed;  
+    top: 50%;  
+    left: 130px;  
+    transform: translateY(-50%);  
+    z-index: 1000;  
     text-align: center;
   }
   
   .title-container h1 {
     font-family: 'Roboto', sans-serif;
-    font-size: 5rem;  /* Increased font size for a bigger title */
+    font-size: 5rem;  
     font-weight: bold;
     margin: 0;
     letter-spacing: 2px;
   }
   
   .title-container .cine {
-    color: #ffffff;  /* White color for Cine */
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3); /* Optional text shadow */
+    color: #ffffff; 
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3); 
   }
   
   .title-container .match {
-    color: #e50914;  /* Red color for Match */
-    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3); /* Optional text shadow */
+    color: #e50914;  
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3); 
   }
   
   .title-container .slogan {
     font-family: 'Quicksand', sans-serif;
     color: #ffffff;
-    font-size: 1.2rem;  /* Slightly increased font size for the slogan */
+    font-size: 1.2rem; 
     font-weight: 300;
     margin-top: 10px;
     letter-spacing: 1px;
-    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); /* Optional text shadow */
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3); 
   } 
