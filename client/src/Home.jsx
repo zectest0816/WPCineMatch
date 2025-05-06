@@ -1,11 +1,12 @@
+import Navbar from "./Navbar";
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
 import {
-  fetchMovies,
+  fetchMoviesByGenre,
   fetchMovieDetails,
   fetchMovieTrailer,
   IMAGE_BASE_URL,
 } from "./api.js";
+import "./styles/home.js";
 import { useNavigate } from "react-router-dom";
 
 // Styled Components
@@ -72,73 +73,13 @@ const MovieWrapper = styled.div`
   border-radius: 10px;
   overflow: hidden;
 `;
-
-// favourite movie heart button
-const HeartButton = styled.button`
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: transparent;
-  border: none;
-  font-size: 1.5rem;
-  color: white;
-  z-index: 2;
-  cursor: pointer;
-
-  &:hover {
-    color: red;
-  }
-`;
-
-const FavouriteButton = styled.button`
-  padding: 12px;
-  border-radius: 30px;
-  background-color: #141414;
-  color: #fff;
-  border: 1px solid #444;
-  font-size: 1rem;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #222;
-    color: red;
-  }
-`;
-
-// watch later star button
-const WatchLaterButton = styled.button`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: transparent;
-  border: none;
-  font-size: 1.8rem;
-  color: ${({ $isAdded }) => ($isAdded ? "gold" : "white")};
-  z-index: 2;
-  cursor: pointer;
-
-  &:hover {
-    color: gold;
-  }
-`;
-
-
-
-const GoWatchLaterButton = styled.button`
-  padding: 12px;
-  border-radius: 30px;
-  background-color: #141414;
-  color: #fff;
-  border: 1px solid #444;
-  font-size: 1rem;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #222;
-    color: #ffc107; /* Yellow or your preferred highlight */
-  }
-`;
-
+const genres = [
+  { id: 28, name: "Action" },
+  { id: 35, name: "Comedy" },
+  { id: 27, name: "Horror" },
+  { id: 10749, name: "Romance" },
+  { id: 16, name: "Animation" },
+];
 
 
 const Home = () => {
@@ -149,14 +90,22 @@ const Home = () => {
   const [sortBy, setSortBy] = useState("");
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [trailerKey, setTrailerKey] = useState("");
+  const [genreMovies, setGenreMovies] = useState({});
+  const navigate = useNavigate();
   const [watchLaterMovieIds, setWatchLaterMovieIds] = useState([]);
   const [favouriteMovieIds, setFavouriteIds] = useState([]);
-  const navigate = useNavigate();
 
   // Fetch movies on filters change
   useEffect(() => {
-    fetchMovies(query, genre, year, sortBy).then(setMovies);
-  }, [query, genre, year, sortBy]);
+    const loadAllGenres = async () => {
+      const all = {};
+      for (let genre of genres) {
+        all[genre.name] = await fetchMoviesByGenre(genre.id);
+      }
+      setGenreMovies(all);
+    };
+    loadAllGenres();
+  }, []);
 
   // Show movie details (modal or page)
   async function showMovieDetails(movieId) {
@@ -165,7 +114,8 @@ const Home = () => {
     setSelectedMovie(movie);
     setTrailerKey(trailer || "");
   }
-
+  const featuredMovie = genreMovies["Action"]?.[0]; // Featured movie for the banner
+  
   // favourite
   const toggleFavourite = async (movie, event) => {
     event.stopPropagation();
@@ -301,59 +251,49 @@ const Home = () => {
       })
       .catch((error) => console.error("Fetch watch later error:", error));
   }, []);
-  
 
   return (
     <>
       {/* Navbar */}
-      <nav className="navbar navbar-dark bg-black border-bottom border-secondary">
-        <div className="container-fluid">
-          <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
-            🎬 MovieExplorer
-          </a>
-        </div>
-      </nav>
 
-      {/* Filters */}
-      <div className="container my-4">
-        <div className="row g-3 align-items-center justify-content-between">
-          <div className="col-md-6">
-            <StyledInput
-              type="text"
-              placeholder="Search for movies..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <div className="col-md-6 d-flex gap-2">
-            <StyledSelect
-              value={genre}
-              onChange={(e) => setGenre(e.target.value)}
-            >
-              <option value="">Genre</option>
-              <option value="28">Action</option>
-              <option value="35">Comedy</option>
-              <option value="18">Drama</option>
-            </StyledSelect>
-            <StyledSelect
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-            >
-              <option value="">Year</option>
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
-            </StyledSelect>
-            <StyledSelect
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="">Sort By</option>
-              <option value="popularity.desc">Popularity</option>
-              <option value="vote_average.desc">Rating</option>
-              <option value="release_date.desc">Release Date</option>
-            </StyledSelect>
-            <FavouriteButton
+      <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
+        <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
+          🎬 MovieExplorer
+        </a>
+        <button
+          className="btn btn-outline-light ms-auto"
+          onClick={() => navigate("/search")}
+        >
+          🔍 Search
+        </button>
+      </Navbar>
+
+      {/* Hero Banner */}
+      {featuredMovie && (
+        <div
+          className="hero-banner"
+          style={{
+            backgroundImage: `url(${IMAGE_BASE_URL}${featuredMovie.backdrop_path})`,
+          }}
+        >
+          <div className="hero-overlay">
+            <h2 className="hero-title">{featuredMovie.title}</h2>
+            <p className="hero-rank">🔥 Trending Now</p>
+            <p className="hero-description">{featuredMovie.overview}</p>
+            <div className="hero-buttons">
+              <button
+                className="hero-btn play"
+                onClick={() => showMovieDetails(featuredMovie.id)}
+              >
+                ▶ Play
+              </button>
+              <button
+                className="hero-btn info"
+                onClick={() => showMovieDetails(featuredMovie.id)}
+              >
+                ℹ More Info
+              </button>
+              <FavouriteButton
             className="btn btn-outline-danger mb-3"
             onClick={() => navigate("/favourite")}
             > ❤️ View My Favourites
@@ -361,25 +301,31 @@ const Home = () => {
             <GoWatchLaterButton onClick={() => navigate("/watchlater")}>
             ⏳ View Watch Later
             </GoWatchLaterButton>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Movie Results */}
-      <div className="container">
-        <div className="row g-4">
-          {movies.length === 0 ? (
-            <p className="text-white">No movies found.</p>
-          ) : (
-            movies.map((movie) => {
-              const posterUrl = movie.poster_path
-                ? `${IMAGE_BASE_URL}${movie.poster_path}`
-                : "https://via.placeholder.com/300x400?text=No+Image";
-              return (
-                <div key={movie.id} className="col-6 col-sm-4 col-md-3">
-                  <MovieCard onClick={() => showMovieDetails(movie.id)}>
-                  <MovieWrapper>
-                  <HeartButton 
+      {/* Movie List */}
+      <div className="container mt-5">
+        {Object.entries(genreMovies).map(([genre, movies]) => (
+          <div key={genre} className="mb-4">
+            <h3 className="text-white mb-3">{genre} Movies</h3>
+            <div className="movie-row">
+              {movies.map((movie) => (
+                <img
+                  key={movie.id}
+                  className="movie-thumbnail"
+                  src={
+                    movie.poster_path
+                      ? `${IMAGE_BASE_URL}${movie.poster_path}`
+                      : "https://via.placeholder.com/300x400?text=No+Image"
+                  }
+                  alt={movie.title}
+                  onClick={() => showMovieDetails(movie.id)} // Display movie details on click
+                />
+              ))}
+              <HeartButton 
                     $isAdded={favouriteMovieIds.includes(movie.id)}
                     onClick={(e) => toggleFavourite(movie, e)}
                   >
@@ -391,26 +337,14 @@ const Home = () => {
                     >
                       {watchLaterMovieIds.includes(movie.id) ? "★" : "☆"}
                     </WatchLaterButton>
-                    <MoviePoster src={posterUrl} alt={movie.title} />
-                    <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
-                  </MovieWrapper>
-                  </MovieCard>
-                </div>
-              );
-            })
-          )}
-        </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Modal */}
+      {/* Movie Details Modal */}
       {selectedMovie && (
-        <div
-          className="modal fade show"
-          id="movieModal"
-          tabIndex="-1"
-          aria-hidden="true"
-          style={{ display: "block" }}
-        >
+        <div className="modal fade show" style={{ display: "block" }}>
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content bg-dark text-white">
               <div className="modal-header border-secondary">
@@ -418,9 +352,7 @@ const Home = () => {
                 <button
                   type="button"
                   className="btn-close btn-close-white"
-                  data-bs-dismiss="modal"
-                  aria-label="Close"
-                  onClick={() => setSelectedMovie(null)} // Reset the modal
+                  onClick={() => setSelectedMovie(null)} // Close modal
                 ></button>
               </div>
               <div className="modal-body d-flex flex-column flex-md-row gap-3">
