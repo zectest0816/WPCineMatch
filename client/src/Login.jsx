@@ -1,50 +1,28 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import axios from 'axios';
-import './login.css';
-import bgImage from './assets/netflix-background-gs7hjuwvv2g0e9fj.jpg';
+import axios from 'axios'
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
     const handleSubmit = (e) => {
-        e.preventDefault();
+        e.preventDefault()
         axios.post('http://localhost:3001/login', { email, password })
             .then(result => {
-                console.log(result);
+                console.log(result)
                 if (result.data === "Success") {
-                    navigate('/home');
-                } else {
-                    setErrorMessage('Invalid email or password.');
+                    navigate('/home')
                 }
             })
-            .catch(err => {
-                console.log(err);
-                setErrorMessage('Login failed. Please try again.');
-            });
+            .catch(err => console.log(err))
     }
 
     return (
-        <div
-            className="d-flex justify-content-center align-items-center vh-100"
-            style={{
-                backgroundImage: `url(${bgImage})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-            }}
-        >
-            <div className="login-box login-box-shift">
+        <div className="d-flex justify-content-center align-items-center bg-secondary vh-100">
+            <div className="bg-white p-3 rounded w-25">
                 <h2>Login</h2>
-
-                {errorMessage && (
-                    <div className="alert alert-danger py-1">
-                        {errorMessage}
-                    </div>
-                )}
-
                 <form onSubmit={handleSubmit}>
                     <div className="mb-3">
                         <label htmlFor="email">
@@ -80,15 +58,8 @@ const Login = () => {
                     Sign Up
                 </Link>
             </div>
-
-            <div className="title-container">
-                <h1> <span className="cine">Cine</span>
-                <span className="match">Match</span></h1>
-                <p className="slogan">Your ultimate movie matchmaker</p> 
-            </div>
         </div>
     );
 };
 
 export default Login;
-
