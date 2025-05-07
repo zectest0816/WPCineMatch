@@ -1,12 +1,13 @@
-import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import Landing from "./Landing"; //
-import Signup from "./Signup";
-import Login from "./Login";
 import Home from "./Home";
+import Landing from "./Landing"; //
+import Login from "./Login";
 import Search from "./Search";
+import Signup from "./Signup";
+import Trending from "./Trending";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -18,6 +19,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/trending" element={<Trending />} />
+        {/* Add other routes here */}
       </Routes>
     </BrowserRouter>
   );
