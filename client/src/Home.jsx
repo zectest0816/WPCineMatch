@@ -12,28 +12,6 @@ import styled from 'styled-components';
 import { API_BASE_URL } from './config';
 
 // Styled Components
-const StyledInput = styled.input`
-  padding: 12px;
-  border-radius: 30px;
-  width: 100%;
-  background-color: #141414;
-  color: #fff;
-  border: 1px solid #444;
-  font-size: 1rem;
-  &::placeholder {
-    color: #aaa;
-  }
-`;
-
-const StyledSelect = styled.select`
-  padding: 12px;
-  border-radius: 30px;
-  background-color: #141414;
-  color: #fff;
-  border: 1px solid #444;
-  font-size: 1rem;
-`;
-
 const MovieCard = styled.div`
   cursor: pointer;
   border-radius: 10px;
@@ -45,13 +23,6 @@ const MovieCard = styled.div`
   &:hover {
     transform: scale(1.08);
   }
-`;
-
-const MoviePoster = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
 `;
 
 const MovieTitleOverlay = styled.div`
@@ -74,6 +45,13 @@ const MovieWrapper = styled.div`
   position: relative;
   border-radius: 10px;
   overflow: hidden;
+`;
+
+
+
+const MovieContainer = styled.div`
+  position: relative;
+  margin: 8px;
 `;
 
 const genres = [
@@ -161,23 +139,20 @@ const WatchLaterButton = styled.button`
   }
 `;
 
-const MovieContainer = styled.div`
-  position: relative;
-  margin: 8px;
+const MoviePoster = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
 `;
 
 const Home = () => {
-  const [movies, setMovies] = useState([]);
-  const [query, setQuery] = useState("");
-  const [genre, setGenre] = useState("");
-  const [year, setYear] = useState("");
-  const [sortBy, setSortBy] = useState("");
+  const [genreMovies, setGenreMovies] = useState({});
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [trailerKey, setTrailerKey] = useState("");
-  const [genreMovies, setGenreMovies] = useState({});
-  const navigate = useNavigate();
   const [watchLaterMovieIds, setWatchLaterMovieIds] = useState([]);
   const [favouriteMovieIds, setFavouriteIds] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadAllGenres = async () => {
@@ -196,8 +171,7 @@ const Home = () => {
     setSelectedMovie(movie);
     setTrailerKey(trailer || "");
   }
-
-  const featuredMovie = genreMovies["Action"]?.[0];
+  
 
   // Favourite functionality
   const toggleFavourite = async (movie, event) => {
@@ -320,6 +294,8 @@ const Home = () => {
     fetchWatchLater();
   }, []);
 
+  const featuredMovie = genreMovies["Action"]?.[0];
+
   return (
     <>
       <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
@@ -334,6 +310,7 @@ const Home = () => {
         </button>
       </Navbar>
 
+      {/* Hero Banner */}
       {featuredMovie && (
         <div
           className="hero-banner"
@@ -363,6 +340,7 @@ const Home = () => {
         </div>
       )}
 
+      {/* Movie List */}
       <div className="container mt-5">
         {Object.entries(genreMovies).map(([genre, movies]) => (
           <div key={genre} className="mb-4">
@@ -373,7 +351,7 @@ const Home = () => {
                   <img
                     className="movie-thumbnail"
                     src={
-                      movie.poster_path 
+                      movie.poster_path
                         ? `${IMAGE_BASE_URL}${movie.poster_path}`
                         : "https://via.placeholder.com/300x400?text=No+Image"
                     }
@@ -387,6 +365,7 @@ const Home = () => {
         ))}
       </div>
 
+      {/* Movie Details Modal */}
       {selectedMovie && (
         <div className="modal fade show" style={{ display: "block" }}>
           <div className="modal-dialog modal-lg modal-dialog-centered">

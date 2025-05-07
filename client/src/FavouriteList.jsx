@@ -146,23 +146,6 @@ const FavouriteList = () => {
   const navigate = useNavigate();
   const email = localStorage.getItem("userEmail");
 
-  const FavouriteList = () => {
-    // Add trailerKey to existing state
-    const [trailerKey, setTrailerKey] = useState("");
-  
-    // Update showMovieDetails to match WatchLaterList's version
-    async function showMovieDetails(movieId) {
-      try {
-        const movie = await fetchMovieDetails(movieId);
-        const trailer = await fetchMovieTrailer(movieId);
-        setSelectedMovie(movie);
-        setTrailerKey(trailer || "");
-      } catch (error) {
-        console.error("Error fetching movie details:", error);
-      }
-    }
-  }
-
   const groupByGenre = (movies) => {
     const grouped = {};
     movies.forEach((movie) => {
@@ -183,7 +166,7 @@ const FavouriteList = () => {
 
       try {
         const response = await fetch(
-          `http://localhost:3001/api/favourite/list/${email}`
+          `${API_BASE_URL}/api/favourite/list/${email}`
         );
         if (!response.ok) throw new Error("Failed to fetch favourites");
         
@@ -215,20 +198,27 @@ const FavouriteList = () => {
       alert("You must be logged in to modify favorites.");
       return;
     }
-
+  
     try {
       const response = await fetch(
-        `http://localhost:3001/api/favourite/${movieId}?userId=${email}`,
+        `${API_BASE_URL}/api/favourite/${movieId}?userId=${email}`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to remove movie");
-
-      setFavourites((prev) => prev.filter((movie) => movie.id !== movieId));
-      setGroupedMovies(groupByGenre(favourites.filter((movie) => movie.id !== movieId)));
+  
+      const updatedFavourites = favourites.filter((movie) => movie.id !== movieId);
+      setFavourites(updatedFavourites);
+      setGroupedMovies(groupByGenre(updatedFavourites));
+  
+      // Close modal if the removed movie is currently shown
+      if (selectedMovie && selectedMovie.id === movieId) {
+        setSelectedMovie(null);
+      }
     } catch (error) {
       console.error("Error removing favorite:", error);
     }
   };
+  
 
   async function showMovieDetails(movieId) {
     try {
@@ -240,6 +230,7 @@ const FavouriteList = () => {
       console.error("Error fetching movie details:", error);
     }
   }
+
 
   return (
     <>
@@ -264,7 +255,20 @@ const FavouriteList = () => {
         </div>
       </div>
     </div>
-      
+
+      {/* <div className="container mt-4">
+        <div className="row justify-content-center">
+          <div className="col-md-6">
+            <input
+              type="text"
+              className="form-control bg-dark text-light"
+              placeholder="Search your favorites..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+      </div> */}
 
       <div className="container mt-5">
         {favourites.length === 0 ? (
@@ -298,8 +302,7 @@ const FavouriteList = () => {
           ))
         )}
       </div>
-
-      {selectedMovie && (
+        {selectedMovie && (
         <div className="modal fade show" style={{ display: "block" }}>
           <div className="modal-dialog modal-lg modal-dialog-centered">
             <div className="modal-content bg-dark text-white">
@@ -336,7 +339,6 @@ const FavouriteList = () => {
                     $isAdded={true}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRemoveFavourite(selectedMovie.id);
                     }}
                   >
                     ★
@@ -369,6 +371,4 @@ const FavouriteList = () => {
     </>
   );
 };
-
 export default FavouriteList;
-         
