@@ -32,6 +32,27 @@ app.post('/register', (req, res) => {
         .catch(err => res.json(err))
 })
 
+const CommentModel = require('./models/Comment');
+
+app.post('/comments', async (req, res) => {
+    const { movieId, user, text } = req.body;
+    try {
+        const comment = await CommentModel.create({ movieId, user, text });
+        res.json(comment);
+    } catch (err) {
+        res.status(500).json({ error: "Error saving comment" });
+    }
+});
+
+app.get('/comments/:movieId', async (req, res) => {
+    try {
+        const comments = await CommentModel.find({ movieId: req.params.movieId }).sort({ createdAt: -1 });
+        res.json(comments);
+    } catch (err) {
+        res.status(500).json({ error: "Error fetching comments" });
+    }
+});
+
 app.listen(3001, () => {
     console.log("server is running")
 })
