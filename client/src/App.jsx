@@ -5,13 +5,10 @@ import Home from './Home';
 import Favourite from './FavouriteList';
 import WatchLater from './WatchLaterList';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from "react";
 import Search from "./Search";
 import Bookmark from "./Bookmark";
 
-
 function App() {
-  const [count, setCount] = useState(0);
   return (
     <BrowserRouter>
         <Routes>
@@ -23,7 +20,8 @@ function App() {
           <Route path="/favourite" element={<Favourite />} />
           <Route path="/watchlater" element={<WatchLater />} />
           <Route path="/bookmark" element={<Bookmark/>} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
     </BrowserRouter>
   );
 }

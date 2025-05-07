@@ -9,6 +9,7 @@ import {
 import "./styles/home.js";
 import { useNavigate } from "react-router-dom";
 import styled from 'styled-components';
+import { API_BASE_URL } from './config';
 
 // Styled Components
 const StyledInput = styled.input`
@@ -74,6 +75,7 @@ const MovieWrapper = styled.div`
   border-radius: 10px;
   overflow: hidden;
 `;
+
 const genres = [
   { id: 28, name: "Action" },
   { id: 35, name: "Comedy" },
@@ -82,7 +84,6 @@ const genres = [
   { id: 16, name: "Animation" },
 ];
 
-// Add this styled component definition near other styled components
 const ActionButton = styled.button`
   padding: 10px 20px;
   border-radius: 20px;
@@ -92,6 +93,7 @@ const ActionButton = styled.button`
   transition: all 0.3s ease;
 `;
 
+// Update the HeartButton styled component
 const HeartButton = styled.button`
   position: absolute;
   top: 8px;
@@ -102,26 +104,60 @@ const HeartButton = styled.button`
   color: ${props => props.$isAdded ? "red" : "white"};
   z-index: 2;
   cursor: pointer;
+  transition: all 0.3s ease;
 
   &:hover {
     color: red;
+    
+    &::before {
+      content: "${props => props.$isAdded ? 'Remove from Favourites' : 'Add to Favourites'}";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 1;
+    }
   }
 `;
 
-
+// Update the WatchLaterButton styled component
 const WatchLaterButton = styled.button`
   position: absolute;
-  top: 8px;
+  top: 1px;
   right: 8px;
   background: transparent;
   border: none;
-  font-size: 1.5rem;
+  font-size: 2rem;
   color: ${props => props.$isAdded ? "gold" : "white"};
   z-index: 2;
   cursor: pointer;
+  transition: all 0.3s ease;
 
   &:hover {
     color: gold;
+    
+    &::before {
+      content: "${props => props.$isAdded ? 'Remove from Watch Later' : 'Add to Watch Later'}";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 1;
+    }
   }
 `;
 
@@ -143,7 +179,6 @@ const Home = () => {
   const [watchLaterMovieIds, setWatchLaterMovieIds] = useState([]);
   const [favouriteMovieIds, setFavouriteIds] = useState([]);
 
-  // Fetch movies on filters change
   useEffect(() => {
     const loadAllGenres = async () => {
       const all = {};
@@ -155,49 +190,41 @@ const Home = () => {
     loadAllGenres();
   }, []);
 
-  // Show movie details (modal or page)
   async function showMovieDetails(movieId) {
     const movie = await fetchMovieDetails(movieId);
     const trailer = await fetchMovieTrailer(movieId);
     setSelectedMovie(movie);
     setTrailerKey(trailer || "");
   }
-  const featuredMovie = genreMovies["Action"]?.[0]; // Featured movie for the banner
-  
-  // favourite
+
+  const featuredMovie = genreMovies["Action"]?.[0];
+
+  // Favourite functionality
   const toggleFavourite = async (movie, event) => {
     event.stopPropagation();
-    const userId = localStorage.getItem("userEmail");
-    if (!userId) {
-      alert("Please log in to modify Favourite list.");
-      return;
-    }
-  
-    const isAdded = favouriteMovieIds.includes(movie.id);
-  
     try {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) {
+        alert("Please log in to modify Favourite list.");
+        return;
+      }
+
+      const isAdded = favouriteMovieIds.includes(movie.id);
+
       if (isAdded) {
-        // Remove from favourite
-        const response = await fetch(`http://localhost:3001/api/favourite/${movie.id}?userId=${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`, {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-  
+
         if (!response.ok) throw new Error("Failed to remove movie");
-  
         const updated = favouriteMovieIds.filter(id => id !== movie.id);
         setFavouriteIds(updated);
-        localStorage.setItem("favouriteMovie", JSON.stringify(updated));
       } else {
-        // Add to favourite
-        const response = await fetch("http://localhost:3001/api/favourite/add", {
+        const response = await fetch(`${API_BASE_URL}/api/favourite/add`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId,
             movieId: movie.id,
@@ -205,105 +232,96 @@ const Home = () => {
             poster_path: movie.poster_path,
           }),
         });
-  
+
         if (!response.ok) throw new Error("Failed to add movie");
-  
         const updated = [...favouriteMovieIds, movie.id];
         setFavouriteIds(updated);
-        localStorage.setItem("favouriteMovie", JSON.stringify(updated));
       }
     } catch (err) {
       console.error("Favourite toggle error:", err);
-      alert("Something went wrong. Please try again.");
-    }
-  };
-
-  // Fetch initial favorites on mount
-    useEffect(() => {
-      const userId = localStorage.getItem("userEmail");
-      if (!userId) return;
-
-      fetch(`http://localhost:3001/api/favourite/list/${userId}`)
-        .then((response) => {
-          if (!response.ok) throw new Error("Failed to fetch favorites");
-          return response.json();
-        })
-        .then((data) => {
-          const ids = data.map((fav) => fav.movieId);
-          setFavouriteIds(ids);
-          localStorage.setItem("favouriteMovie", JSON.stringify(ids)); // Optional
-        })
-        .catch((error) => console.error("Fetch favorites error:", error));
-    }, []);
-
-
-  
-  // watch later
-  const toggleWatchLater = async (movie, event) => {
-    event.stopPropagation();
-    const userId = localStorage.getItem("userEmail");
-    if (!userId) {
-      alert("Please log in to modify Watch Later list.");
-      return;
-    }
-  
-    const isAdded = watchLaterMovieIds.includes(movie.id);
-  
-    try {
-      if (isAdded) {
-        const response = await fetch(`http://localhost:3001/api/watchlater/${movie.id}?userId=${userId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!response.ok) throw new Error("Failed to remove movie");
-  
-        const updated = watchLaterMovieIds.filter(id => id !== movie.id);
-        setWatchLaterMovieIds(updated);
-        localStorage.setItem("watchLaterMovies", JSON.stringify(updated));
-      } else {
-        const response = await fetch("http://localhost:3001/api/watchlater/add", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            movieId: movie.id,
-            title: movie.title,
-            poster_path: movie.poster_path,
-          }),
-        });
-        if (!response.ok) throw new Error("Failed to add movie");
-  
-        const updated = [...watchLaterMovieIds, movie.id];
-        setWatchLaterMovieIds(updated);
-        localStorage.setItem("watchLaterMovies", JSON.stringify(updated));
-      }
-    } catch (err) {
-      console.error("Watch Later toggle error:", err);
-      alert("Something went wrong. Please try again.");
+      alert("Connection error. Please check your network and try again.");
     }
   };
 
   useEffect(() => {
-    const userId = localStorage.getItem("userEmail");
-    if (!userId) return;
-  
-    fetch(`http://localhost:3001/api/watchlater/list/${userId}`)
-      .then((response) => {
+    const fetchFavorites = async () => {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/favourite/list/${userId}`);
+        if (!response.ok) throw new Error("Failed to fetch favorites");
+        const data = await response.json();
+        const ids = data.map((fav) => fav.movieId);
+        setFavouriteIds(ids);
+      } catch (error) {
+        console.error("Fetch favorites error:", error);
+      }
+    };
+    fetchFavorites();
+  }, []);
+
+  // Watch Later functionality
+  const toggleWatchLater = async (movie, event) => {
+    event.stopPropagation();
+    try {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) {
+        alert("Please log in to modify Watch Later list.");
+        return;
+      }
+
+      const isAdded = watchLaterMovieIds.includes(movie.id);
+
+      if (isAdded) {
+        const response = await fetch(`${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        });
+        if (!response.ok) throw new Error("Failed to remove movie");
+        const updated = watchLaterMovieIds.filter(id => id !== movie.id);
+        setWatchLaterMovieIds(updated);
+      } else {
+        const response = await fetch(`${API_BASE_URL}/api/watchlater/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to add movie");
+        const updated = [...watchLaterMovieIds, movie.id];
+        setWatchLaterMovieIds(updated);
+      }
+    } catch (err) {
+      console.error("Watch Later toggle error:", err);
+      alert("Connection error. Please check your network and try again.");
+    }
+  };
+
+  useEffect(() => {
+    const fetchWatchLater = async () => {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) return;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/watchlater/list/${userId}`);
         if (!response.ok) throw new Error("Failed to fetch watch later");
-        return response.json();
-      })
-      .then((data) => {
+        const data = await response.json();
         const ids = data.map((item) => item.movieId);
         setWatchLaterMovieIds(ids);
-        localStorage.setItem("watchLaterMovies", JSON.stringify(ids));
-      })
-      .catch((error) => console.error("Fetch watch later error:", error));
+      } catch (error) {
+        console.error("Fetch watch later error:", error);
+      }
+    };
+    fetchWatchLater();
   }, []);
 
   return (
     <>
-      {/* Navbar */}
-
       <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
         <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
           🎬 MovieExplorer
@@ -316,7 +334,6 @@ const Home = () => {
         </button>
       </Navbar>
 
-      {/* Hero Banner */}
       {featuredMovie && (
         <div
           className="hero-banner"
@@ -346,44 +363,30 @@ const Home = () => {
         </div>
       )}
 
-      {/* Movie List */}
       <div className="container mt-5">
         {Object.entries(genreMovies).map(([genre, movies]) => (
           <div key={genre} className="mb-4">
             <h3 className="text-white mb-3">{genre} Movies</h3>
             <div className="movie-row">
-            {movies.map((movie) => (
-            <MovieContainer key={movie.id}>
-              <img
-                className="movie-thumbnail"
-                src={
-                  movie.poster_path 
-                    ? `${IMAGE_BASE_URL}${movie.poster_path}`
-                    : "https://via.placeholder.com/300x400?text=No+Image"
-                }
-                alt={movie.title}
-                onClick={() => showMovieDetails(movie.id)}
-              />
-              <HeartButton 
-                $isAdded={favouriteMovieIds.includes(movie.id)}
-                onClick={(e) => toggleFavourite(movie, e)}
-              >
-                {favouriteMovieIds.includes(movie.id) ? "❤️" : "🤍"}
-              </HeartButton>
-              <WatchLaterButton
-                $isAdded={watchLaterMovieIds.includes(movie.id)}
-                onClick={(e) => toggleWatchLater(movie, e)}
-              >
-                {watchLaterMovieIds.includes(movie.id) ? "★" : "☆"}
-              </WatchLaterButton>
-            </MovieContainer>
-            ))}
+              {movies.map((movie) => (
+                <MovieContainer key={movie.id}>
+                  <img
+                    className="movie-thumbnail"
+                    src={
+                      movie.poster_path 
+                        ? `${IMAGE_BASE_URL}${movie.poster_path}`
+                        : "https://via.placeholder.com/300x400?text=No+Image"
+                    }
+                    alt={movie.title}
+                    onClick={() => showMovieDetails(movie.id)}
+                  />
+                </MovieContainer>
+              ))}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Movie Details Modal */}
       {selectedMovie && (
         <div className="modal fade show" style={{ display: "block" }}>
           <div className="modal-dialog modal-lg modal-dialog-centered">
@@ -393,28 +396,44 @@ const Home = () => {
                 <button
                   type="button"
                   className="btn-close btn-close-white"
-                  onClick={() => setSelectedMovie(null)} // Close modal
+                  onClick={() => setSelectedMovie(null)}
                 ></button>
               </div>
               <div className="modal-body d-flex flex-column flex-md-row gap-3">
-                <img
-                  src={
-                    selectedMovie.poster_path
-                      ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
-                      : "https://via.placeholder.com/300x400?text=No+Image"
-                  }
-                  className="img-fluid"
-                  style={{ maxWidth: "300px", borderRadius: "8px" }}
-                  alt="Movie Poster"
-                />
-                <div>
+                <div style={{ position: 'relative' }}>
+                  <img
+                    src={
+                      selectedMovie.poster_path
+                        ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
+                        : "https://via.placeholder.com/300x400?text=No+Image"
+                    }
+                    className="img-fluid"
+                    style={{ maxWidth: "300px", borderRadius: "8px" }}
+                    alt="Movie Poster"
+                  />
+                  <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                    <HeartButton 
+                      $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
+                      onClick={(e) => toggleFavourite(selectedMovie, e)}
+                    >
+                      {favouriteMovieIds.includes(selectedMovie.id) ? "❤️" : "🤍"}
+                    </HeartButton>
+                    <WatchLaterButton
+                      $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
+                      onClick={(e) => toggleWatchLater(selectedMovie, e)}
+                    >
+                      {watchLaterMovieIds.includes(selectedMovie.id) ? "★" : "☆"}
+                    </WatchLaterButton>
+                  </div>
+                </div>
+                <div style={{ flex: 1 }}>
                   <p>{selectedMovie.overview}</p>
-                  <p>
-                    <strong>Release Date:</strong> {selectedMovie.release_date}
-                  </p>
-                  <p>
-                    <strong>Rating:</strong> {selectedMovie.vote_average}
-                  </p>
+                  <div className="movie-details-grid">
+                    <p><strong>Release Date:</strong> {selectedMovie.release_date}</p>
+                    <p><strong>Rating:</strong> {selectedMovie.vote_average}/10</p>
+                    <p><strong>Runtime:</strong> {selectedMovie.runtime} mins</p>
+                    <p><strong>Genres:</strong> {selectedMovie.genres?.map(g => g.name).join(', ')}</p>
+                  </div>
                   <div className="mt-3">
                     {trailerKey ? (
                       <iframe
