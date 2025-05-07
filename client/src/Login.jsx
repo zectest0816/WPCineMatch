@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import axios from 'axios'
+import axios from 'axios';
+import './login.css';
+import bgImage from './assets/netflix-background-gs7hjuwvv2g0e9fj.jpg';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const navigate = useNavigate()
+    const [errorMessage, setErrorMessage] = useState('');
+    const navigate = useNavigate();
 
     const handleSubmit = (e) => {
-        e.preventDefault()
+        e.preventDefault();
         axios.post('http://localhost:3001/login', { email, password })
             .then(result => {
-                console.log(result)
+                console.log(result);
                 if (result.data === "Success") {
-                    localStorage.setItem("userEmail", email);  
                     localStorage.setItem("userEmail", email);  
                     navigate('/home');
                 }
@@ -21,13 +23,30 @@ const Login = () => {
                     setErrorMessage('Invalid email or password.');
                 }
             })
-            .catch(err => console.log(err))
+            .catch(err => {
+                console.log(err);
+                setErrorMessage('Login failed. Please try again.');
+            });
     }
 
     return (
-        <div className="d-flex justify-content-center align-items-center bg-secondary vh-100">
-            <div className="bg-white p-3 rounded w-25">
+        <div
+            className="d-flex justify-content-center align-items-center vh-100"
+            style={{
+                backgroundImage: `url(${bgImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+            }}
+        >
+            <div className="login-box login-box-shift">
                 <h2>Login</h2>
+
+                {errorMessage && (
+                    <div className="alert alert-danger py-1">
+                        {errorMessage}
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     <div className="mb-3">
                         <label htmlFor="email">
