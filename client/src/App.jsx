@@ -7,6 +7,7 @@ import Signup from "./Signup";
 import Login from "./Login";
 import Home from "./Home";
 import Search from "./Search";
+import Profile from "./profile";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -18,6 +19,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
         <Route path="/search" element={<Search />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );
