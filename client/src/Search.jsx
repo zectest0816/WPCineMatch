@@ -290,39 +290,30 @@ const Search = () => {
                       ></iframe>
                     </div>
                   )}
-                  <div className="poster-section">
-                    <img
-                      src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
-                      alt={selectedMovie.title}
-                      className="modal-poster"
-                      style={{ position: 'relative', zIndex: 1 }}
-                    />
-                    <TopButtonsWrapper>
-                      <HeartButton
-                        $isAdded={favoriteMovieIds.includes(selectedMovie.id)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(selectedMovie, e);
-                        }}
-                        title={favoriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
-                        style={{ marginBottom: '3.5px' }}
-                        color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
-                      >
-                        {favoriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
-                      </HeartButton>
-
-                      <WatchLaterButton
-                        $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleWatchLater(selectedMovie, e);
-                        }}
-                        title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
-                        color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
-                      >
-                        {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
-                      </WatchLaterButton>
-                    </TopButtonsWrapper>
+                  <div className="top-buttons-wrapper">
+                    <HeartButton
+                      $isAdded={favoriteMovieIds.includes(selectedMovie.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(selectedMovie, e);
+                      }}
+                      title={favoriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
+                      style={{ marginBottom: '3.5px' }}
+                      color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
+                    >
+                      {favoriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
+                    </HeartButton>
+                    <WatchLaterButton
+                      $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWatchLater(selectedMovie, e);
+                      }}
+                      title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
+                      color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
+                    >
+                      {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
+                    </WatchLaterButton>
                   </div>
                   <div className="comment-section mt-4">
                     <h4 className="text-light mb-3">Comments</h4>

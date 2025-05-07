@@ -78,6 +78,16 @@ const Home = () => {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
   const navigate = useNavigate();
+  
+  const fetchComments = async (movieId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/comments/${movieId}`);
+      const data = await response.json();
+      setComments(data);
+    } catch (error) {
+      console.error("Failed to fetch comments:", error);
+    }
+  };  
 
   useEffect(() => {
     const loadAllGenres = async () => {
@@ -95,6 +105,7 @@ const Home = () => {
     const trailer = await fetchMovieTrailer(movieId);
     setSelectedMovie(movie);
     setTrailerKey(trailer || "");
+    fetchComments(movieId);
   }
 
   // Favourite functionality with optimistic updates
