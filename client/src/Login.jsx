@@ -13,7 +13,8 @@ const Login = () => {
             .then(result => {
                 console.log(result)
                 if (result.data === "Success") {
-                    navigate('/home')
+                    localStorage.setItem("userEmail", email);  
+                    navigate('/home');
                 }
             })
             .catch(err => console.log(err))
