@@ -10,6 +10,8 @@ import "./styles/home.js";
 import { useNavigate } from "react-router-dom";
 import styled from 'styled-components';
 import { API_BASE_URL } from './config';
+import HeartButton from './components/HeartButton';
+import WatchLaterButton from './components/WatchLaterButton';
 
 // Styled Components
 const MovieCard = styled.div`
@@ -71,74 +73,6 @@ const ActionButton = styled.button`
   transition: all 0.3s ease;
 `;
 
-// Update the HeartButton styled component
-const HeartButton = styled.button`
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: transparent;
-  border: none;
-  font-size: 1.5rem;
-  color: ${props => props.$isAdded ? "red" : "white"};
-  z-index: 2;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: red;
-    
-    &::before {
-      content: "${props => props.$isAdded ? 'Remove from Favourites' : 'Add to Favourites'}";
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      white-space: nowrap;
-      pointer-events: none;
-      opacity: 1;
-    }
-  }
-`;
-
-// Update the WatchLaterButton styled component
-const WatchLaterButton = styled.button`
-  position: absolute;
-  top: 1px;
-  right: 8px;
-  background: transparent;
-  border: none;
-  font-size: 2rem;
-  color: ${props => props.$isAdded ? "gold" : "white"};
-  z-index: 2;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: gold;
-    
-    &::before {
-      content: "${props => props.$isAdded ? 'Remove from Watch Later' : 'Add to Watch Later'}";
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      white-space: nowrap;
-      pointer-events: none;
-      opacity: 1;
-    }
-  }
-`;
-
 const MoviePoster = styled.img`
   width: 100%;
   height: 100%;
@@ -179,7 +113,7 @@ const Home = () => {
     try {
       const userId = localStorage.getItem("userEmail");
       if (!userId) {
-        alert("Please log in to modify Favourite list.");
+        alert("Please log in to modify your lists.");
         return;
       }
 
@@ -241,7 +175,7 @@ const Home = () => {
     try {
       const userId = localStorage.getItem("userEmail");
       if (!userId) {
-        alert("Please log in to modify Watch Later list.");
+        alert("Please log in to modify your lists.");
         return;
       }
 
@@ -367,71 +301,72 @@ const Home = () => {
 
       {/* Movie Details Modal */}
       {selectedMovie && (
-        <div className="modal fade show" style={{ display: "block" }}>
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content bg-dark text-white">
-              <div className="modal-header border-secondary">
-                <h5 className="modal-title">{selectedMovie.title}</h5>
-                <button
-                  type="button"
-                  className="btn-close btn-close-white"
-                  onClick={() => setSelectedMovie(null)}
-                ></button>
+      <div className="modal-overlay" onClick={() => setSelectedMovie(null)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <button className="close-button" onClick={() => setSelectedMovie(null)}>
+            ✖
+          </button>
+          <div className="modal-body">
+          <div className="poster-section">
+          <div className="poster-wrapper">
+            <img
+              src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
+              alt={selectedMovie.title}
+              className="modal-poster"
+            />
+            <div className="top-buttons-wrapper">
+            <HeartButton 
+              $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
+              onClick={(e) => toggleFavourite(selectedMovie, e)}
+              title={favouriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              {favouriteMovieIds.includes(selectedMovie.id) ? "❤️" : "🤍"}
+            </HeartButton>
+            <WatchLaterButton
+              $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
+              onClick={(e) => toggleWatchLater(selectedMovie, e)}
+              title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
+              style={{ marginTop: '8px' }} // Add this line
+            >
+              {watchLaterMovieIds.includes(selectedMovie.id) ? "★" : "☆"}
+            </WatchLaterButton>
+          </div>
+
+          </div>
+          <div className="button-container">
               </div>
-              <div className="modal-body d-flex flex-column flex-md-row gap-3">
-                <div style={{ position: 'relative' }}>
-                  <img
-                    src={
-                      selectedMovie.poster_path
-                        ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
-                        : "https://via.placeholder.com/300x400?text=No+Image"
-                    }
-                    className="img-fluid"
-                    style={{ maxWidth: "300px", borderRadius: "8px" }}
-                    alt="Movie Poster"
-                  />
-                  <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', justifyContent: 'space-between' }}>
-                    <HeartButton 
-                      $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
-                      onClick={(e) => toggleFavourite(selectedMovie, e)}
-                    >
-                      {favouriteMovieIds.includes(selectedMovie.id) ? "❤️" : "🤍"}
-                    </HeartButton>
-                    <WatchLaterButton
-                      $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
-                      onClick={(e) => toggleWatchLater(selectedMovie, e)}
-                    >
-                      {watchLaterMovieIds.includes(selectedMovie.id) ? "★" : "☆"}
-                    </WatchLaterButton>
-                  </div>
-                </div>
-                <div style={{ flex: 1 }}>
+            </div>
+
+                <div className="modal-info">
+                  <h2>{selectedMovie.title}</h2>
                   <p>{selectedMovie.overview}</p>
-                  <div className="movie-details-grid">
-                    <p><strong>Release Date:</strong> {selectedMovie.release_date}</p>
-                    <p><strong>Rating:</strong> {selectedMovie.vote_average}/10</p>
-                    <p><strong>Runtime:</strong> {selectedMovie.runtime} mins</p>
-                    <p><strong>Genres:</strong> {selectedMovie.genres?.map(g => g.name).join(', ')}</p>
-                  </div>
-                  <div className="mt-3">
-                    {trailerKey ? (
-                      <iframe
-                        width="100%"
-                        height="300"
-                        src={`https://www.youtube.com/embed/${trailerKey}`}
-                        frameBorder="0"
-                        allowFullScreen
-                        title="Trailer"
-                      ></iframe>
-                    ) : (
-                      <p>No trailer available.</p>
-                    )}
-                  </div>
+                
+                <div className="movie-details-grid">
+                  <p><strong>Release Date:</strong> {selectedMovie.release_date}</p>
+                  <p><strong>Rating:</strong> {selectedMovie.vote_average}/10</p>
+                  <p><strong>Runtime:</strong> {selectedMovie.runtime} mins</p>
+                  <p><strong>Genres:</strong> {selectedMovie.genres?.map(g => g.name).join(', ')}</p>
                 </div>
+
+
+                {trailerKey ? (
+                  <div className="trailer">
+                    <iframe
+                      width="100%"
+                      height="300"
+                      src={`https://www.youtube.com/embed/${trailerKey}`}
+                      frameBorder="0"
+                      allowFullScreen
+                      title="Trailer"
+                    ></iframe>
+                  </div>
+                ) : (
+                  <p>No trailer available.</p>
+                )}
               </div>
             </div>
           </div>
-        </div>
+        </div> 
       )}
     </>
   );
