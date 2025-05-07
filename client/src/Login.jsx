@@ -16,8 +16,10 @@ const Login = () => {
             .then(result => {
                 console.log(result);
                 if (result.data === "Success") {
+                    localStorage.setItem("userEmail", email);  
                     navigate('/home');
-                } else {
+                }
+                else {
                     setErrorMessage('Invalid email or password.');
                 }
             })
@@ -83,8 +85,8 @@ const Login = () => {
 
             <div className="title-container">
                 <h1> <span className="cine">Cine</span>
-                <span className="match">Match</span></h1>
-                <p className="slogan">Your ultimate movie matchmaker</p> 
+                    <span className="match">Match</span></h1>
+                <p className="slogan">Your ultimate movie matchmaker</p>
             </div>
         </div>
     );
