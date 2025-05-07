@@ -50,7 +50,6 @@ const Navbar = () => {
           className="nav-icon"
           title="Bookmark"
           onClick={() => navigate("/bookmark")}
-          style={{ color: "#00b4d8" }}  
         />
         <FaUserCircle
           className="nav-icon profile-icon"

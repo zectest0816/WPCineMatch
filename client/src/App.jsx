@@ -26,7 +26,6 @@ function App() {
           <Route path="/favourite" element={<Favourite />} />
           <Route path="/watchlater" element={<WatchLater />} />
           <Route path="/bookmark" element={<Bookmark/>} />
-          <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
     </BrowserRouter>
   );
