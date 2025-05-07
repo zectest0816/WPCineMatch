@@ -18,13 +18,6 @@ style.innerHTML = `
   display: none;
 }
 
-.movie-poster {
-  height: 200px;
-  border-radius: 10px;
-  transition: transform 0.3s;
-  cursor: pointer;
-}
-
 .movie-poster:hover {
   transform: scale(1.08);
 }
@@ -55,6 +48,138 @@ style.innerHTML = `
 .scroll-button.right {
   right: 0;
 }
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: #1c1c1c;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 90%;
+  position: relative;
+  color: white;
+}
+
+.close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.modal-poster {
+  width: 100%;
+  max-height: 400px;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.modal-info {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.movie-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.trailer {
+  margin-top: 1rem;
+}
+
+.button-container {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (min-width: 768px) {
+  .modal-body {
+    flex-direction: row;
+  }
+  .modal-poster {
+    width: 300px;
+    height: auto;
+    margin-right: 20px;
+  }
+}
+
+.poster-container {
+position: relative;
+display: inline-block;
+}
+
+.card-buttons {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 1;
+}
+
+.card-buttons button {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  padding: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.card-buttons button:hover::before {
+  content: attr(title);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 1;
+}
+  .poster-wrapper {
+  position: relative;
+  width: fit-content;
+}
+  
 
   body {
     font-family: 'Roboto', sans-serif;
@@ -142,4 +267,6 @@ style.innerHTML = `
     font-weight: bold;
   }
 `;
+
+
 document.head.appendChild(style);
