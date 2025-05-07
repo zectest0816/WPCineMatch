@@ -48,8 +48,9 @@ const Navbar = () => {
         />
         <FaBookmark
           className="nav-icon"
-          title="Watchlist"
-          onClick={() => navigate("/watchlist")}
+          title="Bookmark"
+          onClick={() => navigate("/bookmark")}
+          style={{ color: "#00b4d8" }}  
         />
         <FaUserCircle
           className="nav-icon profile-icon"
