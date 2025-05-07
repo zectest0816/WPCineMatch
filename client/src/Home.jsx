@@ -75,6 +75,8 @@ const Home = () => {
   const [trailerKey, setTrailerKey] = useState("");
   const [watchLaterMovieIds, setWatchLaterMovieIds] = useState([]);
   const [favouriteMovieIds, setFavouriteIds] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [comments, setComments] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -118,10 +120,10 @@ const Home = () => {
       }
 
       // API call
-      const endpoint = isAdded 
+      const endpoint = isAdded
         ? `${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`
         : `${API_BASE_URL}/api/favourite/add`;
-        
+
       const response = await fetch(endpoint, {
         method: isAdded ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -144,6 +146,29 @@ const Home = () => {
       console.error("Favourite toggle error:", err);
       alert("Operation failed. Please try again.");
     }
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+
+    const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
+
+    const response = await fetch("http://localhost:3001/comments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        movieId: selectedMovie.id,
+        user: userEmail,
+        text: commentText,
+      }),
+    });
+
+    const newComment = await response.json();
+    setComments([newComment, ...comments]);
+    setCommentText("");
   };
 
   // Watch Later functionality with optimistic updates
@@ -169,10 +194,10 @@ const Home = () => {
       }
 
       // API call
-      const endpoint = isAdded 
+      const endpoint = isAdded
         ? `${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`
         : `${API_BASE_URL}/api/watchlater/add`;
-        
+
       const response = await fetch(endpoint, {
         method: isAdded ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
@@ -306,7 +331,7 @@ const Home = () => {
                     className="modal-poster"
                   />
                   <div className="top-buttons-wrapper">
-                    <HeartButton 
+                    <HeartButton
                       $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
                       onClick={(e) => toggleFavourite(selectedMovie, e)}
                       title={favouriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
@@ -347,6 +372,61 @@ const Home = () => {
                 ) : (
                   <p>No trailer available.</p>
                 )}
+                <div className="comment-section mt-4">
+                  <h4 className="text-light mb-3">Comments</h4>
+                  <form onSubmit={handleCommentSubmit} className="mb-4">
+                    <div className="input-group">
+                      <textarea
+                        className="form-control bg-dark text-light border-secondary"
+                        rows="2"
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        placeholder="Write your comment..."
+                        style={{ resize: "none" }}
+                      ></textarea>
+                      <button className="btn btn-danger" type="submit">
+                        <i className="bi bi-send"></i> Send
+                      </button>
+                    </div>
+                  </form>
+                  <div className="comment-list overflow-auto" style={{ maxHeight: "300px" }}>
+                    {comments.length > 0 ? (
+                      comments.map((comment, idx) => (
+                        <div
+                          key={idx}
+                          className="d-flex mb-3 p-3 rounded"
+                          style={{
+                            backgroundColor: "#1f1f1f",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                          }}
+                        >
+                          <div
+                            className="flex-shrink-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                            style={{
+                              width: "45px",
+                              height: "45px",
+                              fontSize: "1.1rem",
+                              fontWeight: "600",
+                            }}
+                          >
+                            {comment.user.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="d-flex justify-content-between align-items-center mb-1">
+                              <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
+                              <small className="text-muted">
+                                {new Date(comment.createdAt).toLocaleString()}
+                              </small>
+                            </div>
+                            <p className="mb-0 text-light">{comment.text}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted">No comments yet. Be the first!</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
