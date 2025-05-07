@@ -97,27 +97,43 @@ style.innerHTML = `
   cursor: pointer;
 }
 
-.modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 @media (min-width: 768px) {
   .modal-body {
     flex-direction: row;
   }
 }
 
+.modal-body {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
 .modal-poster {
-  width: 100%;
-  max-width: 250px;
+  width: 300px;
+  height: auto;
   border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .modal-info {
-  flex: 1;
-  padding-left: 1.5rem;
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: 100%;
+  padding-right: 0.5rem;
+}
+.modal-info,
+.comment-list {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.modal-info::-webkit-scrollbar,
+.comment-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 .trailer {
