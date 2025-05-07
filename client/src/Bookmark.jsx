@@ -75,11 +75,11 @@ const GoWatchLaterButton = styled(ActionButton)`
   }
 `;
 
-const Profile = () => {
+const Bookmark = () => {
     const navigate = useNavigate();
   
     return (
-      <div className="profile-container" style={{
+      <div className="bookmark-container" style={{
         maxWidth: '800px',
         margin: '40px auto',
         padding: '32px',
@@ -97,7 +97,7 @@ const Profile = () => {
           marginBottom: '32px',
           letterSpacing: '0.5px'
         }}>
-          My Profile
+          Bookmark
         </h2>
         <div style={{
           display: 'flex',
@@ -116,4 +116,4 @@ const Profile = () => {
     );
   };
 
-export default Profile;
+export default Bookmark;

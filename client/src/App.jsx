@@ -7,7 +7,7 @@ import WatchLater from './WatchLaterList';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from "react";
 import Search from "./Search";
-import Profile from "./Profile";
+import Bookmark from "./Bookmark";
 
 
 function App() {
@@ -22,7 +22,7 @@ function App() {
           <Route path="/search" element={<Search />} />
           <Route path="/favourite" element={<Favourite />} />
           <Route path="/watchlater" element={<WatchLater />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/bookmark" element={<Bookmark/>} />
       </Routes>
     </BrowserRouter>
   );
