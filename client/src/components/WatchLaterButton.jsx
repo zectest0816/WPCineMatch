@@ -17,7 +17,7 @@ const WatchLaterButton = styled.button`
     &::before {
       content: "${props => props.$isAdded ? 'Remove from Watch Later' : 'Add to Watch Later'}";
       position: absolute;
-      top: 100%;
+      top: -30%;
       left: 200%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.8);

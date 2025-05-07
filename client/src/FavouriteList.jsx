@@ -157,12 +157,17 @@ const FavouriteList = () => {
   const groupByGenre = (movies) => {
     const grouped = {};
     movies.forEach((movie) => {
-      if (movie.genres && Array.isArray(movie.genres)) {
-        movie.genres.forEach((genre) => {
-          const genreName = genre.name;
-          if (!grouped[genreName]) grouped[genreName] = [];
-          grouped[genreName].push(movie);
-        });
+      // Ensure movie.genres is an array before using forEach
+      if (Array.isArray(movie.genres) && movie.genres.length > 0) {
+          movie.genres.forEach((genre) => {
+              const genreName = genre.name;
+              if (!grouped[genreName]) grouped[genreName] = [];
+              grouped[genreName].push(movie);
+          });
+      } else {
+          // Group movies without genres under "No Genre" category
+          if (!grouped["No Genre"]) grouped["No Genre"] = [];
+          grouped["No Genre"].push(movie);
       }
     });
     return grouped;
@@ -186,7 +191,7 @@ const FavouriteList = () => {
             return {
               ...item,
               ...details,
-              genres: details.genres || [],
+              genres: details.genres || [],  // Ensure genres is always an array
             };
           })
         );
@@ -261,7 +266,7 @@ const FavouriteList = () => {
         ) : (
           Object.entries(groupedMovies).map(([genre, movies]) => (
             <GenreGroup key={genre}>
-              <h3 className="text-white mb-3">{genre} Movies</h3>
+              <h3 className="text-white mb-3">{genre}</h3>
               <div className="movie-row d-flex flex-wrap">
                 {movies
                   .filter((movie) =>
@@ -333,7 +338,9 @@ const FavouriteList = () => {
                   <p><strong>Release Date:</strong> {selectedMovie.release_date}</p>
                   <p><strong>Rating:</strong> {selectedMovie.vote_average}/10</p>
                   <p><strong>Runtime:</strong> {selectedMovie.runtime} mins</p>
-                  <p><strong>Genres:</strong> {selectedMovie.genres?.map(g => g.name).join(', ')}</p>
+                  <p>
+                    <strong>Genres:</strong> {selectedMovie.genres?.map(g => g.name).join(', ') || 'N/A'}
+                  </p>
                 </div>
                 {trailerKey ? (
                   <div className="trailer">
@@ -359,4 +366,3 @@ const FavouriteList = () => {
 };
 
 export default FavouriteList;
-

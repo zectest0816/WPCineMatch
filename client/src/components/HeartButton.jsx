@@ -17,8 +17,8 @@ const HeartButton = styled.button`
     &::before {
       content: "${props => props.$isAdded ? 'Remove from Favourites' : 'Add to Favourites'}";
       position: absolute;
-      top: 100%;
-      left: 200%;
+      top: -60%;
+      left: 190%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.8);
       color: white;

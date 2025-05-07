@@ -105,7 +105,7 @@ const Search = () => {
     setTrailerUrl("");
   };
 
-  //Fetch Favorites/Watch Later Data
+  // Fetch Favorites/Watch Later Data
   useEffect(() => {
     const fetchUserLists = async () => {
       try {
@@ -129,7 +129,7 @@ const Search = () => {
   }, []);
 
   const toggleFavorite = async (movie, event) => {
-    if (event) event.stopPropagation(); // Prevent modal close
+    if (event) event.stopPropagation();
     try {
       const userId = localStorage.getItem("userEmail");
       if (!userId) {
@@ -139,13 +139,10 @@ const Search = () => {
 
       const isAdded = favoriteMovieIds.includes(movie.id);
 
-      if (isAdded) {
-        await fetch(`${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" }
-        });
-        setFavoriteMovieIds(prev => prev.filter(id => id !== movie.id));
-      } else {
+      if (!isAdded) {
+        // Optimistic update
+        setFavoriteMovieIds(prev => [...prev, movie.id]);
+
         await fetch(`${API_BASE_URL}/api/favourite/add`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -153,17 +150,30 @@ const Search = () => {
             userId,
             movieId: movie.id,
             title: movie.title,
-            poster_path: movie.poster_path,
+            poster_path: movie.poster_path || "",
           }),
         });
-        setFavoriteMovieIds(prev => [...prev, movie.id]);
+      } else {
+        // Optimistic update
+        setFavoriteMovieIds(prev => prev.filter(id => id !== movie.id));
+
+        await fetch(`${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        });
       }
     } catch (error) {
       console.error("Favourite toggle error:", error);
-      alert("Connection error. Please check your network and try again.");
+      // Rollback
+      const email = localStorage.getItem("userEmail");
+      if (email) {
+        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${email}`);
+        const favData = await favResponse.json();
+        setFavoriteMovieIds(favData.map(item => item.movieId));
+      }
+      alert("Failed to update Favorites. Please try again.");
     }
   };
-
 
   const toggleWatchLater = async (movie, event) => {
     if (event) event.stopPropagation();
@@ -177,6 +187,9 @@ const Search = () => {
       const isAdded = watchLaterMovieIds.includes(movie.id);
 
       if (!isAdded) {
+        // Optimistic update
+        setWatchLaterMovieIds(prev => [...prev, movie.id]);
+
         await fetch(`${API_BASE_URL}/api/watchlater/add`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -184,20 +197,28 @@ const Search = () => {
             userId: userId,
             movieId: movie.id,
             title: movie.title,
-            poster_path: movie.poster_path,
+            poster_path: movie.poster_path || "",
           }),
         });
-        setWatchLaterMovieIds(prev => [...prev, movie.id]);
-      }
-      else {
+      } else {
+        // Optimistic update
+        setWatchLaterMovieIds(prev => prev.filter(id => id !== movie.id));
+
         await fetch(`${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`, {
           method: "DELETE",
           headers: { "Content-Type": "application/json" }
         });
-        setWatchLaterMovieIds(prev => prev.filter(id => id !== movie.id));
       }
     } catch (error) {
-      console.error("Error removing watch later:", error);
+      console.error("Error updating watch later:", error);
+      // Rollback
+      const email = localStorage.getItem("userEmail");
+      if (email) {
+        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${email}`);
+        const wlData = await wlResponse.json();
+        setWatchLaterMovieIds(wlData.map(item => item.movieId));
+      }
+      alert("Failed to update Watch Later. Please try again.");
     }
   };
 
@@ -274,10 +295,9 @@ const Search = () => {
                       src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
                       alt={selectedMovie.title}
                       className="modal-poster"
-                      style={{ position: 'relative', zIndex: 1 }} // Add position relative and zIndex
+                      style={{ position: 'relative', zIndex: 1 }}
                     />
                     <TopButtonsWrapper>
-                      {/* HeartButton - Update the children and color */}
                       <HeartButton
                         $isAdded={favoriteMovieIds.includes(selectedMovie.id)}
                         onClick={(e) => {
@@ -286,12 +306,11 @@ const Search = () => {
                         }}
                         title={favoriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
                         style={{ marginBottom: '3.5px' }}
-                        color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"} // Set color based on state
+                        color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
                       >
                         {favoriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
                       </HeartButton>
 
-                      {/* WatchLaterButton - Update the children and color */}
                       <WatchLaterButton
                         $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
                         onClick={(e) => {
@@ -299,7 +318,7 @@ const Search = () => {
                           toggleWatchLater(selectedMovie, e);
                         }}
                         title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
-                        color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"} // Set color based on state
+                        color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
                       >
                         {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
                       </WatchLaterButton>
@@ -307,7 +326,6 @@ const Search = () => {
                   </div>
                   <div className="comment-section mt-4">
                     <h4 className="text-light mb-3">Comments</h4>
-
                     <form onSubmit={handleCommentSubmit} className="mb-4">
                       <div className="input-group">
                         <textarea
@@ -323,7 +341,6 @@ const Search = () => {
                         </button>
                       </div>
                     </form>
-
                     <div className="comment-list overflow-auto" style={{ maxHeight: "300px" }}>
                       {comments.length > 0 ? (
                         comments.map((comment, idx) => (
