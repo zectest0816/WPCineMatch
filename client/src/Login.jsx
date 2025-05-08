@@ -12,11 +12,15 @@ const Login = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!email || !password) {
+            setErrorMessage('Please fill in both email and password.');
+            return;
+        }
         axios.post('http://localhost:3001/login', { email, password })
             .then(result => {
                 console.log(result);
                 if (result.data === "Success") {
-                    localStorage.setItem("userEmail", email);  
+                    localStorage.setItem("userEmail", email);
                     navigate('/home');
                 }
                 else {

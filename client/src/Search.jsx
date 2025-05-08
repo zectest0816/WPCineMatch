@@ -9,6 +9,20 @@ import {
 } from "./api";
 import Navbar from "./Navbar";
 import "./styles/search.js";
+import HeartButton from './components/HeartButton';
+import WatchLaterButton from './components/WatchLaterButton';
+import styled from "styled-components";
+import { API_BASE_URL } from './config';
+
+const TopButtonsWrapper = styled.div`
+  position: absolute;
+  bottom: 120px;
+  left:  -1%;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px;
+  z-index: 2;
+`;
 
 const Search = () => {
   const navigate = useNavigate();
@@ -27,6 +41,8 @@ const Search = () => {
   const [trailerUrl, setTrailerUrl] = useState("");
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
+  const [favoriteMovieIds, setFavoriteMovieIds] = useState([]);
+  const [watchLaterMovieIds, setWatchLaterMovieIds] = useState([]);
 
   useEffect(() => {
     const fetchGenresData = async () => {
@@ -89,6 +105,123 @@ const Search = () => {
     setTrailerUrl("");
   };
 
+  // Fetch Favorites/Watch Later Data
+  useEffect(() => {
+    const fetchUserLists = async () => {
+      try {
+        const email = localStorage.getItem("userEmail");
+        if (!email) return;
+
+        // Fetch favorites
+        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${email}`);
+        const favData = await favResponse.json();
+        setFavoriteMovieIds(favData.map(item => item.movieId));
+
+        // Fetch watch later
+        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${email}`);
+        const wlData = await wlResponse.json();
+        setWatchLaterMovieIds(wlData.map(item => item.movieId));
+      } catch (error) {
+        console.error("Error fetching lists:", error);
+      }
+    };
+    fetchUserLists();
+  }, []);
+
+  const toggleFavorite = async (movie, event) => {
+    if (event) event.stopPropagation();
+    try {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) {
+        alert("Please log in to modify Favourite list.");
+        return;
+      }
+
+      const isAdded = favoriteMovieIds.includes(movie.id);
+
+      if (!isAdded) {
+        // Optimistic update
+        setFavoriteMovieIds(prev => [...prev, movie.id]);
+
+        await fetch(`${API_BASE_URL}/api/favourite/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path || "",
+          }),
+        });
+      } else {
+        // Optimistic update
+        setFavoriteMovieIds(prev => prev.filter(id => id !== movie.id));
+
+        await fetch(`${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    } catch (error) {
+      console.error("Favourite toggle error:", error);
+      // Rollback
+      const email = localStorage.getItem("userEmail");
+      if (email) {
+        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${email}`);
+        const favData = await favResponse.json();
+        setFavoriteMovieIds(favData.map(item => item.movieId));
+      }
+      alert("Failed to update Favorites. Please try again.");
+    }
+  };
+
+  const toggleWatchLater = async (movie, event) => {
+    if (event) event.stopPropagation();
+    try {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) {
+        alert("Please log in to modify Watch Later list.");
+        return;
+      }
+
+      const isAdded = watchLaterMovieIds.includes(movie.id);
+
+      if (!isAdded) {
+        // Optimistic update
+        setWatchLaterMovieIds(prev => [...prev, movie.id]);
+
+        await fetch(`${API_BASE_URL}/api/watchlater/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path || "",
+          }),
+        });
+      } else {
+        // Optimistic update
+        setWatchLaterMovieIds(prev => prev.filter(id => id !== movie.id));
+
+        await fetch(`${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+    } catch (error) {
+      console.error("Error updating watch later:", error);
+      // Rollback
+      const email = localStorage.getItem("userEmail");
+      if (email) {
+        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${email}`);
+        const wlData = await wlResponse.json();
+        setWatchLaterMovieIds(wlData.map(item => item.movieId));
+      }
+      alert("Failed to update Watch Later. Please try again.");
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -137,11 +270,40 @@ const Search = () => {
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <button className="close-button" onClick={closeModal}>✖</button>
               <div className="modal-body">
-                <img
-                  src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
-                  alt={selectedMovie.title}
-                  className="modal-poster"
-                />
+                <div className="poster-section">
+                  <div className="poster-wrapper">
+                    <img
+                      src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
+                      alt={selectedMovie.title}
+                      className="modal-poster"
+                    />
+                    <div className="top-buttons-wrapper">
+                      <HeartButton
+                        $isAdded={favoriteMovieIds.includes(selectedMovie.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(selectedMovie, e);
+                        }}
+                        title={favoriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
+                        style={{ marginBottom: '3.5px' }}
+                        color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
+                      >
+                        {favoriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
+                      </HeartButton>
+                      <WatchLaterButton
+                        $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWatchLater(selectedMovie, e);
+                        }}
+                        title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
+                        color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
+                      >
+                        {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
+                      </WatchLaterButton>
+                    </div>
+                  </div>
+                </div>
                 <div className="modal-info">
                   <h2>{selectedMovie.title}</h2>
                   <p>{selectedMovie.overview}</p>
@@ -159,7 +321,6 @@ const Search = () => {
                   )}
                   <div className="comment-section mt-4">
                     <h4 className="text-light mb-3">Comments</h4>
-
                     <form onSubmit={handleCommentSubmit} className="mb-4">
                       <div className="input-group">
                         <textarea
@@ -175,7 +336,6 @@ const Search = () => {
                         </button>
                       </div>
                     </form>
-
                     <div className="comment-list overflow-auto" style={{ maxHeight: "300px" }}>
                       {comments.length > 0 ? (
                         comments.map((comment, idx) => (
