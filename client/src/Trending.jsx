@@ -151,9 +151,12 @@ const Trending = () => {
         ) : (
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
               gap: "20px",
+              maxWidth: "1200px",
+              margin: "0 auto"
             }}
           >
             {movies.map((movie) => (
@@ -166,9 +169,13 @@ const Trending = () => {
                   textAlign: "center",
                   color: "#fff",
                   transition: "transform 0.2s",
-                  cursor: "pointer" // Add cursor pointer for clickable indication
+                  cursor: "pointer",
+                  width: "220px", // Fixed width
+                  height: "480px", // Increased height to accommodate all content
+                  display: "flex",
+                  flexDirection: "column"
                 }}
-                onClick={() => showMovieDetails(movie.id)} // Add click handler to show details
+                onClick={() => showMovieDetails(movie.id)}
                 onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
               >
@@ -176,18 +183,44 @@ const Trending = () => {
                   src={`${IMAGE_BASE_URL}${movie.poster_path}`}
                   alt={movie.title}
                   style={{
-                    width: "100%",
+                    width: "200px",
                     height: "300px",
                     objectFit: "cover",
                     borderRadius: "8px",
+                    alignSelf: "center"
                   }}
                 />
-                <h3 style={{ color: "red" }}>{movie.title}</h3>
-                <p>
+                <h3 style={{ 
+                  color: "red",
+                  fontSize: "18px",
+                  marginTop: "10px",
+                  minHeight: "50px", // Minimum height for title
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: "2",
+                  WebkitBoxOrient: "vertical"
+                }}>
+                  {movie.title}
+                </h3>
+                <p style={{
+                  margin: "8px 0",
+                  fontSize: "16px"
+                }}>
                   {movie.release_date?.split("-")[0] || "N/A"} · ⭐{" "}
                   {movie.vote_average.toFixed(1)}
                 </p>
-                <p style={{ fontSize: "14px" }}>
+                <p style={{ 
+                  fontSize: "14px",
+                  marginTop: "5px",
+                  marginBottom: "5px",
+                  flex: "1", // Take remaining space
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: "3", // Allow up to 3 lines
+                  WebkitBoxOrient: "vertical"
+                }}>
                   {movie.genre_ids
                     .map((id) => genres.find((g) => g.id === id)?.name || "Unknown")
                     .join(", ")}
