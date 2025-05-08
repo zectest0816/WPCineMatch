@@ -1,6 +1,7 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
-import MovieExplorerLogo from '../public/MovieExplorerLogo.png';
+import MovieExplorerLogo from './assets/MovieExplorerLogo.png'; 
+
 import Navbar from './Navbar'; 
 
 // Fade-in animation
@@ -88,7 +89,17 @@ const BookmarkLink = styled.a`
 const Bookmark = () => {
   return (
     <>
-      <Navbar /> {/* Add Navbar at the top */}
+      <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
+        <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
+          🎬 MovieExplorer
+        </a>
+        <button
+          className="btn btn-outline-light ms-auto"
+          onClick={() => navigate("/search")}
+        >
+          🔍 Search
+        </button>
+      </Navbar>
       <BookmarkSection>
         <LinkContainer>
           <BookmarkLink href="/favourite">
