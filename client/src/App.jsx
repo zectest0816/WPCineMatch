@@ -8,6 +8,7 @@ import Home from './Home';
 import Landing from './Landing';
 import Login from './Login';
 import Search from "./Search";
+import Profile from "./profile";
 import Signup from './Signup';
 import './styles/font.css';
 import Trending from "./trending";
@@ -18,12 +19,13 @@ function App() {
   
   return (
     <BrowserRouter>
-        <Routes>
+       <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/register" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/home" element={<Home />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/favourite" element={<Favourite />} />
           <Route path="/watchlater" element={<WatchLater />} />
           <Route path="/bookmark" element={<Bookmark/>} />
