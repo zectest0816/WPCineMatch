@@ -270,11 +270,40 @@ const Search = () => {
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <button className="close-button" onClick={closeModal}>✖</button>
               <div className="modal-body">
-                <img
-                  src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
-                  alt={selectedMovie.title}
-                  className="modal-poster"
-                />
+                <div className="poster-section">
+                  <div className="poster-wrapper">
+                    <img
+                      src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
+                      alt={selectedMovie.title}
+                      className="modal-poster"
+                    />
+                    <div className="top-buttons-wrapper">
+                      <HeartButton
+                        $isAdded={favoriteMovieIds.includes(selectedMovie.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(selectedMovie, e);
+                        }}
+                        title={favoriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
+                        style={{ marginBottom: '3.5px' }}
+                        color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
+                      >
+                        {favoriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
+                      </HeartButton>
+                      <WatchLaterButton
+                        $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleWatchLater(selectedMovie, e);
+                        }}
+                        title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
+                        color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
+                      >
+                        {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
+                      </WatchLaterButton>
+                    </div>
+                  </div>
+                </div>
                 <div className="modal-info">
                   <h2>{selectedMovie.title}</h2>
                   <p>{selectedMovie.overview}</p>
@@ -290,31 +319,6 @@ const Search = () => {
                       ></iframe>
                     </div>
                   )}
-                  <div className="top-buttons-wrapper">
-                    <HeartButton
-                      $isAdded={favoriteMovieIds.includes(selectedMovie.id)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(selectedMovie, e);
-                      }}
-                      title={favoriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
-                      style={{ marginBottom: '3.5px' }}
-                      color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
-                    >
-                      {favoriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
-                    </HeartButton>
-                    <WatchLaterButton
-                      $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleWatchLater(selectedMovie, e);
-                      }}
-                      title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
-                      color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
-                    >
-                      {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
-                    </WatchLaterButton>
-                  </div>
                   <div className="comment-section mt-4">
                     <h4 className="text-light mb-3">Comments</h4>
                     <form onSubmit={handleCommentSubmit} className="mb-4">
