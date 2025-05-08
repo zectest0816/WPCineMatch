@@ -1,16 +1,17 @@
-import { useState } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useState } from "react";
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
-import Landing from './Landing';
-import Signup from './Signup';
-import Login from './Login';
-import Home from './Home';
-import Favourite from './FavouriteList';
-import WatchLater from './WatchLaterList';
-import Search from "./Search";
 import Bookmark from "./Bookmark";
+import Favourite from './FavouriteList';
+import Home from './Home';
+import Landing from './Landing';
+import Login from './Login';
+import Search from "./Search";
+import Signup from './Signup';
 import './styles/font.css';
+import Trending from "./trending";
+import WatchLater from './WatchLaterList';
 
 function App() {
   const [count, setCount] = useState(0);
@@ -26,6 +27,7 @@ function App() {
           <Route path="/favourite" element={<Favourite />} />
           <Route path="/watchlater" element={<WatchLater />} />
           <Route path="/bookmark" element={<Bookmark/>} />
+          <Route path="/trending" element={<Trending />} />
         </Routes>
     </BrowserRouter>
   );
