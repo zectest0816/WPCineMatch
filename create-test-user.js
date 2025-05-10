@@ -23,8 +23,6 @@ const createTestUser = async () => {
       email: 'test@example.com',
       password: 'password123',
       phoneNumber: '555-123-4567',
-      plan: 'Premium',
-      profilePicture: '',
       favorites: [299536, 299534, 24428], // Some popular Marvel movie IDs
       watchlist: [505642, 447365, 299537], // Some other movie IDs
       watchHistory: [299536, 24428, 99861], // Some watched movie IDs

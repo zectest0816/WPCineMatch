@@ -182,7 +182,7 @@ const Profile = () => {
         <h1>Account</h1>
         <div className="membership-since">
           <span>Member since {new Date(user.createdAt).toLocaleDateString()}</span>
-          <span className="plan-badge">{user.plan || "Standard"}</span>
+          {/* <span className="plan-badge">{user.plan || "Standard"}</span> */}
         </div>
       </div>
 
