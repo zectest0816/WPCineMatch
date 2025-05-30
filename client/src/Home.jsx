@@ -1,5 +1,5 @@
 import Navbar from "./Navbar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   fetchMoviesByGenre,
   fetchMovieDetails,
@@ -8,46 +8,10 @@ import {
 } from "./api.js";
 import "./styles/home.js";
 import { useNavigate } from "react-router-dom";
-import styled from 'styled-components';
-import { API_BASE_URL } from './config';
-import HeartButton from './components/HeartButton';
-import WatchLaterButton from './components/WatchLaterButton';
-
-// Styled Components
-const MovieCard = styled.div`
-  cursor: pointer;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: transform 0.3s ease;
-  background-color: #141414;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-
-  &:hover {
-    transform: scale(1.08);
-  }
-`;
-
-const MovieTitleOverlay = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px;
-  background: linear-gradient(
-    to top,
-    rgba(20, 20, 20, 0.9),
-    rgba(20, 20, 20, 0)
-  );
-  color: white;
-  font-weight: bold;
-  font-size: 1rem;
-`;
-
-const MovieWrapper = styled.div`
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-`;
+import styled from "styled-components";
+import { API_BASE_URL } from "./config";
+import HeartButton from "./components/HeartButton";
+import WatchLaterButton from "./components/WatchLaterButton";
 
 const MovieContainer = styled.div`
   position: relative;
@@ -62,13 +26,6 @@ const genres = [
   { id: 16, name: "Animation" },
 ];
 
-const MoviePoster = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
-`;
-
 const Home = () => {
   const [genreMovies, setGenreMovies] = useState({});
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -77,8 +34,12 @@ const Home = () => {
   const [favouriteMovieIds, setFavouriteIds] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const navigate = useNavigate();
-  
+  const [fadeText, setFadeText] = useState(true);
+  const [scrollInterval, setScrollInterval] = useState(null);
+  const scrollRefs = useRef({});
+
   const fetchComments = async (movieId) => {
     try {
       const response = await fetch(`http://localhost:3001/comments/${movieId}`);
@@ -87,7 +48,7 @@ const Home = () => {
     } catch (error) {
       console.error("Failed to fetch comments:", error);
     }
-  };  
+  };
 
   useEffect(() => {
     const loadAllGenres = async () => {
@@ -100,6 +61,19 @@ const Home = () => {
     loadAllGenres();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHeroIndex(
+        (prevIndex) =>
+          (prevIndex + 1) % (genreMovies["Action"]?.slice(0, 5).length || 1)
+      );
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [genreMovies]);
+
+  const heroMovies = genreMovies["Action"]?.slice(0, 5) || [];
+  const featuredMovie = heroMovies[currentHeroIndex];
+
   async function showMovieDetails(movieId) {
     const movie = await fetchMovieDetails(movieId);
     const trailer = await fetchMovieTrailer(movieId);
@@ -108,7 +82,6 @@ const Home = () => {
     fetchComments(movieId);
   }
 
-  // Favourite functionality with optimistic updates
   const toggleFavourite = async (movie, event) => {
     event.stopPropagation();
     try {
@@ -121,16 +94,14 @@ const Home = () => {
       const isAdded = favouriteMovieIds.includes(movie.id);
       let updatedIds;
 
-      // Optimistic update
       if (isAdded) {
-        updatedIds = favouriteMovieIds.filter(id => id !== movie.id);
+        updatedIds = favouriteMovieIds.filter((id) => id !== movie.id);
         setFavouriteIds(updatedIds);
       } else {
         updatedIds = [...favouriteMovieIds, movie.id];
         setFavouriteIds(updatedIds);
       }
 
-      // API call
       const endpoint = isAdded
         ? `${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`
         : `${API_BASE_URL}/api/favourite/add`;
@@ -138,23 +109,77 @@ const Home = () => {
       const response = await fetch(endpoint, {
         method: isAdded ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: isAdded ? null : JSON.stringify({
-          userId,
-          movieId: movie.id,
-          title: movie.title,
-          poster_path: movie.poster_path,
-        })
+        body: isAdded
+          ? null
+          : JSON.stringify({
+              userId,
+              movieId: movie.id,
+              title: movie.title,
+              poster_path: movie.poster_path,
+            }),
       });
 
       if (!response.ok) {
-        // Rollback on error
-        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${userId}`);
+        const favResponse = await fetch(
+          `${API_BASE_URL}/api/favourite/list/${userId}`
+        );
         const favData = await favResponse.json();
-        setFavouriteIds(favData.map(item => item.movieId));
-        throw new Error(`Failed to ${isAdded ? 'remove' : 'add'} favorite`);
+        setFavouriteIds(favData.map((item) => item.movieId));
+        throw new Error(`Failed to ${isAdded ? "remove" : "add"} favorite`);
       }
     } catch (err) {
       console.error("Favourite toggle error:", err);
+      alert("Operation failed. Please try again.");
+    }
+  };
+
+  const toggleWatchLater = async (movie, event) => {
+    event.stopPropagation();
+    try {
+      const userId = localStorage.getItem("userEmail");
+      if (!userId) {
+        alert("Please log in to modify your lists.");
+        return;
+      }
+
+      const isAdded = watchLaterMovieIds.includes(movie.id);
+      let updatedIds;
+
+      if (isAdded) {
+        updatedIds = watchLaterMovieIds.filter((id) => id !== movie.id);
+        setWatchLaterMovieIds(updatedIds);
+      } else {
+        updatedIds = [...watchLaterMovieIds, movie.id];
+        setWatchLaterMovieIds(updatedIds);
+      }
+
+      const endpoint = isAdded
+        ? `${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`
+        : `${API_BASE_URL}/api/watchlater/add`;
+
+      const response = await fetch(endpoint, {
+        method: isAdded ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: isAdded
+          ? null
+          : JSON.stringify({
+              userId,
+              movieId: movie.id,
+              title: movie.title,
+              poster_path: movie.poster_path,
+            }),
+      });
+
+      if (!response.ok) {
+        const wlResponse = await fetch(
+          `${API_BASE_URL}/api/watchlater/list/${userId}`
+        );
+        const wlData = await wlResponse.json();
+        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
+        throw new Error(`Failed to ${isAdded ? "remove" : "add"} watch later`);
+      }
+    } catch (err) {
+      console.error("Watch Later toggle error:", err);
       alert("Operation failed. Please try again.");
     }
   };
@@ -182,56 +207,16 @@ const Home = () => {
     setCommentText("");
   };
 
-  // Watch Later functionality with optimistic updates
-  const toggleWatchLater = async (movie, event) => {
-    event.stopPropagation();
-    try {
-      const userId = localStorage.getItem("userEmail");
-      if (!userId) {
-        alert("Please log in to modify your lists.");
-        return;
-      }
-
-      const isAdded = watchLaterMovieIds.includes(movie.id);
-      let updatedIds;
-
-      // Optimistic update
-      if (isAdded) {
-        updatedIds = watchLaterMovieIds.filter(id => id !== movie.id);
-        setWatchLaterMovieIds(updatedIds);
-      } else {
-        updatedIds = [...watchLaterMovieIds, movie.id];
-        setWatchLaterMovieIds(updatedIds);
-      }
-
-      // API call
-      const endpoint = isAdded
-        ? `${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`
-        : `${API_BASE_URL}/api/watchlater/add`;
-
-      const response = await fetch(endpoint, {
-        method: isAdded ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: isAdded ? null : JSON.stringify({
-          userId,
-          movieId: movie.id,
-          title: movie.title,
-          poster_path: movie.poster_path,
-        })
-      });
-
-      if (!response.ok) {
-        // Rollback on error
-        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${userId}`);
-        const wlData = await wlResponse.json();
-        setWatchLaterMovieIds(wlData.map(item => item.movieId));
-        throw new Error(`Failed to ${isAdded ? 'remove' : 'add'} watch later`);
-      }
-    } catch (err) {
-      console.error("Watch Later toggle error:", err);
-      alert("Operation failed. Please try again.");
-    }
+  const startScroll = (genre, direction) => {
+    const container = scrollRefs.current[genre];
+    const amount = direction === "left" ? -2 : 2;
+    const interval = setInterval(() => {
+      container.scrollLeft += amount;
+    }, 10);
+    setScrollInterval(interval);
   };
+
+  const stopScroll = () => clearInterval(scrollInterval);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -239,23 +224,23 @@ const Home = () => {
       if (!userId) return;
 
       try {
-        // Fetch favorites
-        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${userId}`);
+        const favResponse = await fetch(
+          `${API_BASE_URL}/api/favourite/list/${userId}`
+        );
         const favData = await favResponse.json();
-        setFavouriteIds(favData.map(item => item.movieId));
+        setFavouriteIds(favData.map((item) => item.movieId));
 
-        // Fetch watch later
-        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${userId}`);
+        const wlResponse = await fetch(
+          `${API_BASE_URL}/api/watchlater/list/${userId}`
+        );
         const wlData = await wlResponse.json();
-        setWatchLaterMovieIds(wlData.map(item => item.movieId));
+        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
       } catch (error) {
         console.error("Fetch error:", error);
       }
     };
     fetchUserData();
   }, []);
-
-  const featuredMovie = genreMovies["Action"]?.[0];
 
   return (
     <>
@@ -271,12 +256,12 @@ const Home = () => {
         </button>
       </Navbar>
 
-      {/* Hero Banner */}
       {featuredMovie && (
         <div
           className="hero-banner"
           style={{
             backgroundImage: `url(${IMAGE_BASE_URL}${featuredMovie.backdrop_path})`,
+            transition: "background-image 1s ease-in-out",
           }}
         >
           <div className="hero-overlay">
@@ -297,6 +282,17 @@ const Home = () => {
                 ℹ More Info
               </button>
             </div>
+          </div>
+
+          {/* Dots navigation */}
+          <div className="hero-dots">
+            {heroMovies.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${index === currentHeroIndex ? "active" : ""}`}
+                onClick={() => setCurrentHeroIndex(index)}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -330,14 +326,21 @@ const Home = () => {
       {selectedMovie && (
         <div className="modal-overlay" onClick={() => setSelectedMovie(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-button" onClick={() => setSelectedMovie(null)}>
+            <button
+              className="close-button"
+              onClick={() => setSelectedMovie(null)}
+            >
               ✖
             </button>
             <div className="modal-body">
               <div className="poster-section">
                 <div className="poster-wrapper">
                   <img
-                    src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
+                    src={
+                      selectedMovie.poster_path
+                        ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
+                        : "https://via.placeholder.com/300x400?text=No+Image"
+                    }
                     alt={selectedMovie.title}
                     className="modal-poster"
                   />
@@ -345,17 +348,29 @@ const Home = () => {
                     <HeartButton
                       $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
                       onClick={(e) => toggleFavourite(selectedMovie, e)}
-                      title={favouriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
+                      title={
+                        favouriteMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Favorites"
+                          : "Add to Favorites"
+                      }
                     >
-                      {favouriteMovieIds.includes(selectedMovie.id) ? "❤️" : "🤍"}
+                      {favouriteMovieIds.includes(selectedMovie.id)
+                        ? "❤️"
+                        : "🤍"}
                     </HeartButton>
                     <WatchLaterButton
                       $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
                       onClick={(e) => toggleWatchLater(selectedMovie, e)}
-                      title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
-                      style={{ marginTop: '8px' }}
+                      title={
+                        watchLaterMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Watch Later"
+                          : "Add to Watch Later"
+                      }
+                      style={{ marginTop: "8px" }}
                     >
-                      {watchLaterMovieIds.includes(selectedMovie.id) ? "★" : "☆"}
+                      {watchLaterMovieIds.includes(selectedMovie.id)
+                        ? "★"
+                        : "☆"}
                     </WatchLaterButton>
                   </div>
                 </div>
@@ -364,10 +379,19 @@ const Home = () => {
                 <h2>{selectedMovie.title}</h2>
                 <p>{selectedMovie.overview}</p>
                 <div className="movie-details-grid">
-                  <p><strong>Release Date:</strong> {selectedMovie.release_date}</p>
-                  <p><strong>Rating:</strong> {selectedMovie.vote_average}/10</p>
-                  <p><strong>Runtime:</strong> {selectedMovie.runtime} mins</p>
-                  <p><strong>Genres:</strong> {selectedMovie.genres?.map(g => g.name).join(', ')}</p>
+                  <p>
+                    <strong>Release Date:</strong> {selectedMovie.release_date}
+                  </p>
+                  <p>
+                    <strong>Rating:</strong> {selectedMovie.vote_average}/10
+                  </p>
+                  <p>
+                    <strong>Runtime:</strong> {selectedMovie.runtime} mins
+                  </p>
+                  <p>
+                    <strong>Genres:</strong>{" "}
+                    {selectedMovie.genres?.map((g) => g.name).join(", ")}
+                  </p>
                 </div>
                 {trailerKey ? (
                   <div className="trailer">
@@ -400,7 +424,10 @@ const Home = () => {
                       </button>
                     </div>
                   </form>
-                  <div className="comment-list overflow-auto" style={{ maxHeight: "300px" }}>
+                  <div
+                    className="comment-list overflow-auto"
+                    style={{ maxHeight: "300px" }}
+                  >
                     {comments.length > 0 ? (
                       comments.map((comment, idx) => (
                         <div
@@ -424,7 +451,9 @@ const Home = () => {
                           </div>
                           <div className="flex-grow-1">
                             <div className="d-flex justify-content-between align-items-center mb-1">
-                              <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
+                              <strong style={{ color: "#e5e5e5" }}>
+                                {comment.user}
+                              </strong>
                               <small className="text-muted">
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
@@ -434,11 +463,14 @@ const Home = () => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-muted">No comments yet. Be the first!</p>
+                      <p className="text-muted">
+                        No comments yet. Be the first!
+                      </p>
                     )}
                   </div>
                 </div>
               </div>
+              
             </div>
           </div>
         </div>

@@ -1,23 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, use } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaSearch, FaChartBar, FaBookmark, FaUserCircle } from "react-icons/fa";
 import "./styles/navbar.css";
+
+  export const SearchProvider = ({ children }) => {
+  return (
+    <SearchContext.Provider value={{ query, setQuery }}>
+      {children}
+    </SearchContext.Provider>
+  );
+};
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
 
-  const handleSearchSubmit = () => {
-    if (searchInput.trim() !== "") {
-      navigate(`/search?query=${encodeURIComponent(searchInput)}`);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearchSubmit();
-    }
-  };
+const handleSearchSubmit = () => {
+  if (searchInput.trim() !== "") {
+    navigate(`/search?query=${encodeURIComponent(searchInput)}`);
+  }
+};
 
   return (
     <div className="navbar">
@@ -30,13 +32,18 @@ const Navbar = () => {
       <div className="nav-center">
         <div className="search-box">
           <FaSearch className="search-icon" onClick={handleSearchSubmit} />
-          <input
-            type="text"
-            placeholder="Search movies..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+             <input
+  value={searchInput}
+  onChange={(e) => setSearchInput(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearchSubmit();
+    }
+  }}
+/>
+
+
         </div>
       </div>
 

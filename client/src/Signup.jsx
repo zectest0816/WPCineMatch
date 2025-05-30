@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import './signup.css';
+import './styles/signup.css';
 import bgImage from './assets/netflix-background-gs7hjuwvv2g0e9fj.jpg';
 
 function Signup() {
