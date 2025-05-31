@@ -1,8 +1,8 @@
-import React from 'react';
-import styled, { keyframes } from 'styled-components';
-import MovieExplorerLogo from './assets/MovieExplorerLogo.png'; 
-
-import Navbar from './Navbar'; 
+import React from "react";
+import styled, { keyframes } from "styled-components";
+import MovieExplorerLogo from "./assets/MovieExplorerLogo.png";
+import { Link, useNavigate } from "react-router-dom";
+import Navbar from "./Navbar";
 
 // Fade-in animation
 const fadeIn = keyframes`
@@ -24,8 +24,8 @@ const BookmarkSection = styled.section`
   justify-content: center;
   align-items: center;
   position: relative;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
-                    url(${MovieExplorerLogo});
+  background-image: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)),
+    url(${MovieExplorerLogo});
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
@@ -46,14 +46,19 @@ const Divider = styled.hr`
   width: 60%;
   border: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
   margin: 10px 0;
 `;
 
-const BookmarkLink = styled.a`
+const BookmarkLink = styled(Link)`
   color: white;
   text-decoration: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   font-weight: 600;
   font-size: 1.4rem;
   padding: 16px 36px;
@@ -75,7 +80,7 @@ const BookmarkLink = styled.a`
   }
 
   &::after {
-    content: '➔';
+    content: "➔";
     margin-left: 10px;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -87,6 +92,7 @@ const BookmarkLink = styled.a`
 `;
 
 const Bookmark = () => {
+  const navigate = useNavigate();
   return (
     <>
       <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
@@ -102,14 +108,14 @@ const Bookmark = () => {
       </Navbar>
       <BookmarkSection>
         <LinkContainer>
-          <BookmarkLink href="/favourite">
+          <BookmarkLink to="/favourite">
             <span>❤️</span>
             My Favourites
           </BookmarkLink>
 
           <Divider />
 
-          <BookmarkLink href="/watchlater">
+          <BookmarkLink to="/watchlater">
             <span>⏳</span>
             Watch Later
           </BookmarkLink>

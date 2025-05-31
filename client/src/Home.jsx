@@ -13,6 +13,7 @@ import { API_BASE_URL } from "./config";
 import HeartButton from "./components/HeartButton";
 import WatchLaterButton from "./components/WatchLaterButton";
 
+
 const MovieContainer = styled.div`
   position: relative;
   margin: 8px;
