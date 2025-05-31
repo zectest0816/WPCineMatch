@@ -1,24 +1,45 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import './styles/signup.css';
-import bgImage from './assets/netflix-background-gs7hjuwvv2g0e9fj.jpg';
+import "./styles/signup.css";
+import bgImage from "./assets/netflix-background-gs7hjuwvv2g0e9fj.jpg";
+import { useAuth } from "./AuthContext";
 
 function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { setIsLoggedIn } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    axios
-      .post("http://localhost:3001/register", { name, email, password })
-      .then((result) => {
-        console.log(result);
-        navigate("/login");
-      })
-      .catch((err) => console.log(err));
+    console.log("Submitting registration...");
+
+    try {
+      const response = await axios.post("http://localhost:3001/register", {
+        name,
+        email,
+        password,
+      });
+      console.log("Registration successful:", response.data);
+
+      // Navigate only after successful registration
+      navigate("/login");
+    } catch (error) {
+      console.error("Signup failed:", error);
+
+      if (error.response) {
+        // Server responded with an error (4xx or 5xx)
+        console.error("Server error:", error.response.data);
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error("No response from server.");
+      } else {
+        // Other errors
+        console.error("Error setting up request:", error.message);
+      }
+    }
   };
 
   return (
@@ -30,13 +51,12 @@ function Signup() {
         backgroundPosition: "center",
       }}
     >
-
       <div className="title-container">
         <h1>
           <span className="cine">Cine</span>
           <span className="match">Match</span>
         </h1>
-        <p className="slogan">Your ultimate movie matchmaker</p> 
+        <p className="slogan">Your ultimate movie matchmaker</p>
       </div>
 
       <div className="signup-box signup-box-shift">
@@ -48,6 +68,7 @@ function Signup() {
               <strong>Name</strong>
             </label>
             <input
+              id="name"
               type="text"
               placeholder="Enter Name"
               autoComplete="off"
@@ -62,6 +83,7 @@ function Signup() {
               <strong>Email</strong>
             </label>
             <input
+              id="email"
               type="email"
               placeholder="Enter Email"
               autoComplete="off"
@@ -76,6 +98,7 @@ function Signup() {
               <strong>Password</strong>
             </label>
             <input
+              id="password"
               type="password"
               placeholder="Enter Password"
               name="password"

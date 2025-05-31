@@ -271,7 +271,17 @@ const Home = () => {
             <div className="hero-buttons">
               <button
                 className="hero-btn play"
-                onClick={() => showMovieDetails(featuredMovie.id)}
+                onClick={async () => {
+                  const trailer = await fetchMovieTrailer(featuredMovie.id);
+                  if (trailer) {
+                    window.open(
+                      `https://www.youtube.com/watch?v=${trailer}`,
+                      "_blank"
+                    );
+                  } else {
+                    alert("Trailer not available.");
+                  }
+                }}
               >
                 ▶ Play
               </button>
@@ -470,7 +480,6 @@ const Home = () => {
                   </div>
                 </div>
               </div>
-              
             </div>
           </div>
         </div>

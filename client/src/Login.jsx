@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./styles/login.css";
-import { useAuth } from "./AuthContext"; // adjust the path if needed
 import bgImage from "./assets/netflix-background-gs7hjuwvv2g0e9fj.jpg";
+import { useAuth } from "./AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -58,7 +58,6 @@ const Login = () => {
               <strong>Email</strong>
             </label>
             <input
-              id="email"
               type="email"
               placeholder="Enter Email"
               autoComplete="off"
@@ -72,7 +71,6 @@ const Login = () => {
               <strong>Password</strong>
             </label>
             <input
-              id="password"
               type="password"
               placeholder="Enter Password"
               name="password"
@@ -92,6 +90,7 @@ const Login = () => {
           Sign Up
         </Link>
       </div>
+
       <div className="title-container">
         <h1>
           {" "}
