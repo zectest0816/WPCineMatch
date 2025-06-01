@@ -35,11 +35,15 @@ const Home = () => {
   const [favouriteMovieIds, setFavouriteIds] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
+  const [activeMenu, setActiveMenu] = useState(null); // Tracks which comment's menu is open
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editText, setEditText] = useState("");
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const navigate = useNavigate();
   const [fadeText, setFadeText] = useState(true);
   const [scrollInterval, setScrollInterval] = useState(null);
   const scrollRefs = useRef({});
+  const userId = localStorage.getItem("userEmail");
 
   const fetchComments = async (movieId) => {
     try {
@@ -49,6 +53,32 @@ const Home = () => {
     } catch (error) {
       console.error("Failed to fetch comments:", error);
     }
+  };
+
+  const toggleMenu = (id) => {
+    setActiveMenu(activeMenu === id ? null : id);
+  };
+
+  const handleEditClick = (id, text) => {
+    setEditingCommentId(id);
+    setEditText(text);
+    setActiveMenu(null); // close menu
+  };
+
+  const handleEditSave = async (id) => {
+    await fetch(`http://localhost:3001/comments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: editText }),
+    });
+    setEditingCommentId(null);
+    fetchComments(selectedMovie.id);
+  };
+
+  const handleDelete = async (id) => {
+    await fetch(`http://localhost:3001/comments/${id}`, { method: "DELETE" });
+    setActiveMenu(null);
+    fetchComments(selectedMovie.id);
   };
 
   useEffect(() => {
@@ -113,11 +143,11 @@ const Home = () => {
         body: isAdded
           ? null
           : JSON.stringify({
-              userId,
-              movieId: movie.id,
-              title: movie.title,
-              poster_path: movie.poster_path,
-            }),
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+          }),
       });
 
       if (!response.ok) {
@@ -164,11 +194,11 @@ const Home = () => {
         body: isAdded
           ? null
           : JSON.stringify({
-              userId,
-              movieId: movie.id,
-              title: movie.title,
-              poster_path: movie.poster_path,
-            }),
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+          }),
       });
 
       if (!response.ok) {
@@ -443,12 +473,13 @@ const Home = () => {
                       comments.map((comment, idx) => (
                         <div
                           key={idx}
-                          className="d-flex mb-3 p-3 rounded"
+                          className="d-flex mb-3 p-3 rounded position-relative"
                           style={{
                             backgroundColor: "#1f1f1f",
                             boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
                           }}
                         >
+                          {/* Avatar */}
                           <div
                             className="flex-shrink-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3"
                             style={{
@@ -460,24 +491,90 @@ const Home = () => {
                           >
                             {comment.user.charAt(0).toUpperCase()}
                           </div>
+
+                          {/* Content */}
                           <div className="flex-grow-1">
                             <div className="d-flex justify-content-between align-items-center mb-1">
-                              <strong style={{ color: "#e5e5e5" }}>
-                                {comment.user}
-                              </strong>
+                              <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
                               <small className="text-muted">
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
                             </div>
-                            <p className="mb-0 text-light">{comment.text}</p>
+
+                            {/* Edit mode or display mode */}
+                            {editingCommentId === comment._id ? (
+                              <>
+                                <input
+                                  className="form-control"
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                />
+                                <div className="mt-2">
+                                  <button
+                                    className="btn btn-success btn-sm me-2"
+                                    onClick={() => handleEditSave(comment._id)}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={() => setEditingCommentId(null)}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <p className="mb-0 text-light">{comment.text}</p>
+                            )}
                           </div>
+
+                          {/* Three-dot menu button - Only show if the comment belongs to current user */}
+                          {comment.user === userId && (
+                            <div className="position-absolute top-0 end-0 p-2">
+                              <button
+                                className="btn btn-sm text-white"
+                                onClick={() => toggleMenu(comment._id)}
+                                style={{ background: "none", border: "none" }}
+                              >
+                                &#8942;
+                              </button>
+                              {activeMenu === comment._id && (
+                                <div
+                                  className="dropdown-menu show"
+                                  style={{
+                                    position: "absolute",
+                                    right: 0,
+                                    top: "100%",
+                                    backgroundColor: "#2c2c2c",
+                                    border: "1px solid #444",
+                                  }}
+                                >
+                                  <button
+                                    className="dropdown-item text-white"
+                                    style={{ backgroundColor: "#2c2c2c" }}
+                                    onClick={() => handleEditClick(comment._id, comment.text)}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="dropdown-item text-danger"
+                                    style={{ backgroundColor: "#2c2c2c" }}
+                                    onClick={() => handleDelete(comment._id)}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                         </div>
                       ))
                     ) : (
-                      <p className="text-muted">
-                        No comments yet. Be the first!
-                      </p>
+                      <p className="text-muted">No comments yet. Be the first!</p>
                     )}
+
                   </div>
                 </div>
               </div>

@@ -69,6 +69,19 @@ app.get('/comments/:movieId', async (req, res) => {
   }
 });
 
+// PATCH for editing
+app.patch("/comments/:commentId", async (req, res) => {
+  const { text } = req.body;
+  const updated = await CommentModel.findByIdAndUpdate(req.params.commentId, { text }, { new: true });
+  res.json(updated);
+});
+
+// DELETE for deleting
+app.delete("/comments/:commentId", async (req, res) => {
+  await CommentModel.findByIdAndDelete(req.params.commentId);
+  res.json({ message: "Deleted" });
+});
+
 // User profile routes
 app.get('/users/:userId', async (req, res) => {
   try {
