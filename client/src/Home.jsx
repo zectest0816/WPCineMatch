@@ -494,13 +494,12 @@ const Home = () => {
 
                           {/* Content */}
                           <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center mb-1">
+                            <div className="d-flex justify-content-between align-items-center mb-1" style={{ paddingRight: '20px' }}>
                               <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
-                              <small className="text-muted">
+                              <small style={{ color: 'white', fontSize: '0.75rem' }}>
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
                             </div>
-
                             {/* Edit mode or display mode */}
                             {editingCommentId === comment._id ? (
                               <>
