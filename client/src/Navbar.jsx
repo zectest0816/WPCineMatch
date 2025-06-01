@@ -1,9 +1,9 @@
 import React, { useState, use } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSearch, FaChartBar, FaBookmark, FaUserCircle } from "react-icons/fa";
+import { FaSearch, FaChartBar, FaBookmark, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import "./styles/navbar.css";
 
-  export const SearchProvider = ({ children }) => {
+export const SearchProvider = ({ children }) => {
   return (
     <SearchContext.Provider value={{ query, setQuery }}>
       {children}
@@ -15,11 +15,16 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
 
-const handleSearchSubmit = () => {
-  if (searchInput.trim() !== "") {
-    navigate(`/search?query=${encodeURIComponent(searchInput)}`);
-  }
-};
+  const handleSearchSubmit = () => {
+    if (searchInput.trim() !== "") {
+      navigate(`/search?query=${encodeURIComponent(searchInput)}`);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
 
   return (
     <div className="navbar">
@@ -32,16 +37,16 @@ const handleSearchSubmit = () => {
       <div className="nav-center">
         <div className="search-box">
           <FaSearch className="search-icon" onClick={handleSearchSubmit} />
-             <input
-  value={searchInput}
-  onChange={(e) => setSearchInput(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSearchSubmit();
-    }
-  }}
-/>
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearchSubmit();
+              }
+            }}
+          />
 
 
         </div>
@@ -62,6 +67,11 @@ const handleSearchSubmit = () => {
           className="nav-icon profile-icon"
           title="Profile"
           onClick={() => navigate("/profile")}
+        />
+        <FaSignOutAlt
+          className="nav-icon"
+          title="Logout"
+          onClick={handleLogout}
         />
       </div>
     </div>
