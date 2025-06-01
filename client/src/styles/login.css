@@ -1,0 +1,165 @@
+.login-bg {
+  background-image: url("/assets/assortment-cinema-elements-red-background-with-copy-space_23-2148457848.avif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh; /* at least full screen height */
+  height: auto; /* grow if content grows */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem; /* avoid edges */
+  box-sizing: border-box;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+
+.login-box {
+  /* height: 500px; */ /* REMOVE this fixed height */
+  max-width: 450px;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.288);
+  padding: 2rem;
+  border-radius: 30px;
+  font-family: "Roboto", sans-serif;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  margin-bottom: 0.5rem;
+}
+
+.login-box-shift {
+  margin-left: 900px;
+}
+
+.login-box-custom {
+  width: 450px;
+  max-width: 100%;
+}
+
+.login-box h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  font-family: "Roboto", sans-serif;
+  font-size: 2.5rem;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.login-box label {
+  font-family: "Quicksand", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 200;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.15rem;
+  display: block;
+}
+
+.login-box .form-control {
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border-radius: 10px !important;
+  background-color: rgba(255, 255, 255, 0.509);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.509);
+}
+
+.login-box .form-control[type="password"] {
+  margin-bottom: 2.5rem;
+}
+
+.login-box .btn {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  border-radius: 25px !important;
+  background-color: #141414; /* Solid black background */
+  color: #ffffff; /* White text */
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.login-box .btn:hover {
+  background-color: #ffffff; /* White background */
+  color: #000000; /* Black text */
+  border: 2px solid #000000;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+}
+
+.login-box .btn-default {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #b02e2e, #cb7777);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.login-box .btn-default:hover {
+  background: linear-gradient(135deg, #e82b2b, #d97171);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.login-box p {
+  color: #fff;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.alert {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+  color: red; /* example color */
+  box-sizing: border-box;
+}
+
+.title-container {
+  position: fixed;
+  top: 50%;
+  left: 130px;
+  transform: translateY(-50%);
+  z-index: 1000;
+  text-align: center;
+}
+
+.title-container h1 {
+  font-family: "Roboto", sans-serif;
+  font-size: 5rem;
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.title-container .cine {
+  color: #ffffff;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.title-container .match {
+  color: #e50914;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.title-container .slogan {
+  font-family: "Quicksand", sans-serif;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 300;
+  margin-top: 10px;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3);
+}
