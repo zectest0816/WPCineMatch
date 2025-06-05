@@ -339,7 +339,7 @@ const FavouriteList = () => {
     applySort(currentSort, filteredMovies);
   };
 
-    const applySort = (sortBy, moviesToSort = watchLater) => {
+    const applySort = (sortBy, moviesToSort = favouriteMovies) => {
     setCurrentSort(sortBy);
 
     let sortedMovies = [...moviesToSort];
@@ -355,9 +355,16 @@ const FavouriteList = () => {
         sortedMovies.sort((a, b) => a.title.localeCompare(b.title));
         break;
       default:
-        break;
+        // When no sort is selected, just group by genre
+        setGroupedMovies(groupByGenre(moviesToSort));
+        return;
     }
-    setGroupedMovies(groupByGenre(sortedMovies, !sortBy));
+
+    // When sorting is active, show both sections
+    setGroupedMovies({
+      "All Movies (Sorted)": sortedMovies, // Top section
+      ...groupByGenre(sortedMovies)        // Bottom section (grouped by genre)
+    });
   };
 
   const handleSort = (sortBy) => {
@@ -457,12 +464,19 @@ const FavouriteList = () => {
     </div>
 
       <div className="container mt-5">
+      {isLoading && <p className="text-white text-center">Loading...</p>}
       {favouriteMovies.length === 0 ? (
         <p className="text-white text-center">Your favourite list is empty</p>
       ) : (
-        Object.entries(groupedMovies).map(([genre, movies]) => (
-          <GenreGroup key={genre}>
-            <h3 className="text-white mb-3">{genre}</h3>
+        Object.entries(groupedMovies).map(([groupName, movies]) => (
+          <GenreGroup key={groupName}>
+            <h3 className="text-white mb-3">
+              {groupName === "All Movies" ? (
+                <span style={{ color: "#ff6b6b" }}>{groupName}</span>
+              ) : (
+                groupName
+              )}
+            </h3>
             <div className="movie-row d-flex flex-wrap">
               {movies.map((movie) => (
                 <MovieContainer key={movie.id} className="mb-4 mx-2">
