@@ -159,7 +159,12 @@ const FavouriteList = () => {
     }
   };
 
-    const groupByGenre = (movies) => {
+    const groupByGenre = (movies, shouldGroup = true) => {
+  if (!shouldGroup) {
+    // Return a single group with all movies when grouping is disabled
+    return { "All Movies": movies };
+  }
+
     const grouped = {};
     movies.forEach((movie) => {
       if (Array.isArray(movie.genres) && movie.genres.length > 0) {
@@ -174,7 +179,7 @@ const FavouriteList = () => {
       }
     });
 
-    // Sort genres alphabetically
+    // Sort genres alphabetically (only when grouping is enabled)
     const sortedGenres = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
     const sortedGrouped = {};
     sortedGenres.forEach((genre) => {
@@ -183,7 +188,6 @@ const FavouriteList = () => {
 
     return sortedGrouped;
   };
-
 
   useEffect(() => {
     const fetchFavouriteMovies = async () => {
@@ -335,26 +339,25 @@ const FavouriteList = () => {
     applySort(currentSort, filteredMovies);
   };
 
-  const applySort = (sortBy, moviesToSort = favouriteMovies) => {
+    const applySort = (sortBy, moviesToSort = watchLater) => {
     setCurrentSort(sortBy);
-    
+
     let sortedMovies = [...moviesToSort];
-    
+
     switch (sortBy) {
-      case 'rating':
+      case "rating":
         sortedMovies.sort((a, b) => b.vote_average - a.vote_average);
         break;
-      case 'releaseDate':
+      case "releaseDate":
         sortedMovies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
         break;
-      case 'title':
+      case "title":
         sortedMovies.sort((a, b) => a.title.localeCompare(b.title));
         break;
       default:
         break;
     }
-
-    setGroupedMovies(groupByGenre(sortedMovies));
+    setGroupedMovies(groupByGenre(sortedMovies, !sortBy));
   };
 
   const handleSort = (sortBy) => {
