@@ -184,19 +184,26 @@ const WatchLaterList = () => {
         const grouped = {};
         movies.forEach((movie) => {
             if (Array.isArray(movie.genres) && movie.genres.length > 0) {
-                movie.genres.forEach((genre) => {
-                    const genreName = genre.name;
-                    if (!grouped[genreName]) grouped[genreName] = [];
-                    grouped[genreName].push(movie);
-                });
+            movie.genres.forEach((genre) => {
+                const genreName = genre.name;
+                if (!grouped[genreName]) grouped[genreName] = [];
+                grouped[genreName].push(movie);
+            });
             } else {
-                if (!grouped["No Genre"]) grouped["No Genre"] = [];
-                grouped["No Genre"].push(movie);
+            if (!grouped["No Genre"]) grouped["No Genre"] = [];
+            grouped["No Genre"].push(movie);
             }
         });
-        return grouped;
-    };
 
+        // Sort genres alphabetically
+        const sortedGenres = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+        const sortedGrouped = {};
+        sortedGenres.forEach((genre) => {
+            sortedGrouped[genre] = grouped[genre];
+        });
+
+        return sortedGrouped;
+        };
 
     const fetchWatchLaterMovies = async () => {
         if (!email) return;
@@ -346,25 +353,34 @@ const WatchLaterList = () => {
     };
 
     const applySort = (sortBy, moviesToSort = watchLater) => {
-        setCurrentSort(sortBy);
-        
-        let sortedMovies = [...moviesToSort];
-        
-        switch (sortBy) {
-            case 'rating':
-                sortedMovies.sort((a, b) => b.vote_average - a.vote_average);
-                break;
-            case 'releaseDate':
-                sortedMovies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
-                break;
-            case 'title':
-                sortedMovies.sort((a, b) => a.title.localeCompare(b.title));
-                break;
-            default:
-                break;
-        }
+    setCurrentSort(sortBy);
 
-        setGroupedMovies(groupByGenre(sortedMovies));
+    let sortedMovies = [...moviesToSort];
+
+    switch (sortBy) {
+        case "rating":
+        sortedMovies.sort((a, b) => b.vote_average - a.vote_average);
+        break;
+        case "releaseDate":
+        sortedMovies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+        break;
+        case "title":
+        sortedMovies.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+        default:
+        break;
+    }
+
+    // When sorting is active, include both sorted and grouped movies
+    if (sortBy) {
+        setGroupedMovies({
+        "All Movies": sortedMovies, // Top section: sorted movies
+        ...groupByGenre(moviesToSort)        // Bottom section: grouped by genre
+        });
+    } else {
+        // Default: only grouped by genre
+        setGroupedMovies(groupByGenre(moviesToSort));
+    }
     };
 
     const handleSort = (sortBy) => {
@@ -437,34 +453,40 @@ const WatchLaterList = () => {
             </div>
             
             <div className="container mt-5">
-        {isLoading && <p className="text-white text-center">Loading...</p>}
-        {watchLater.length === 0 ? (
-            <p className="text-white text-center">Your watch later list is empty</p>
-        ) : (
-            Object.entries(groupedMovies).map(([genre, movies]) => (
-                <GenreGroup key={genre}>
-                    <h3 className="text-white mb-3">{genre}</h3>
-                    <div className="movie-row d-flex flex-wrap">
+                {isLoading && <p className="text-white text-center">Loading...</p>}
+                {watchLater.length === 0 ? (
+                    <p className="text-white text-center">Your watch later list is empty</p>
+                ) : (
+                    Object.entries(groupedMovies).map(([groupName, movies]) => (
+                    <GenreGroup key={groupName}>
+                        <h3 className="text-white mb-3">
+                        {groupName.includes("") ? (
+                            <span style={{ color: "#ffffff" }}>{groupName}</span>
+                        ) : (
+                            groupName
+                        )}
+                        </h3>
+                        <div className="movie-row d-flex flex-wrap">
                         {movies.map((movie) => (
                             <MovieContainer key={movie.id} className="mb-4 mx-2">
-                                <MovieCard onClick={() => showMovieDetails(movie.id)}>
-                                    <MoviePoster
-                                        src={
-                                            movie.poster_path
-                                                ? `${IMAGE_BASE_URL}${movie.poster_path}`
-                                                : "https://via.placeholder.com/300x400?text=No+Image"
-                                        }
-                                        alt={movie.title}
-                                    />
-                                    <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
-                                </MovieCard>
+                            <MovieCard onClick={() => showMovieDetails(movie.id)}>
+                                <MoviePoster
+                                src={
+                                    movie.poster_path
+                                    ? `${IMAGE_BASE_URL}${movie.poster_path}`
+                                    : "https://via.placeholder.com/300x400?text=No+Image"
+                                }
+                                alt={movie.title}
+                                />
+                                <MovieTitleOverlay>{movie.title}</MovieTitleOverlay>
+                            </MovieCard>
                             </MovieContainer>
                         ))}
-                    </div>
-                </GenreGroup>
-            ))
-        )}
-    </div>
+                        </div>
+                    </GenreGroup>
+                    ))
+                )}
+                </div>
 
             {/* Movie Details Modal */}
             {selectedMovie && (
