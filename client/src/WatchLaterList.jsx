@@ -461,7 +461,7 @@ const WatchLaterList = () => {
                     <GenreGroup key={groupName}>
                         <h3 className="text-white mb-3">
                         {groupName.includes("") ? (
-                            <span style={{ color: "#ff6b6b" }}>{groupName}</span>
+                            <span style={{ color: "#ffffff" }}>{groupName}</span>
                         ) : (
                             groupName
                         )}
