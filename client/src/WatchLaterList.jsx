@@ -184,18 +184,26 @@ const WatchLaterList = () => {
         const grouped = {};
         movies.forEach((movie) => {
             if (Array.isArray(movie.genres) && movie.genres.length > 0) {
-                movie.genres.forEach((genre) => {
-                    const genreName = genre.name;
-                    if (!grouped[genreName]) grouped[genreName] = [];
-                    grouped[genreName].push(movie);
-                });
+            movie.genres.forEach((genre) => {
+                const genreName = genre.name;
+                if (!grouped[genreName]) grouped[genreName] = [];
+                grouped[genreName].push(movie);
+            });
             } else {
-                if (!grouped["No Genre"]) grouped["No Genre"] = [];
-                grouped["No Genre"].push(movie);
+            if (!grouped["No Genre"]) grouped["No Genre"] = [];
+            grouped["No Genre"].push(movie);
             }
         });
-        return grouped;
-    };
+
+        // Sort genres alphabetically
+        const sortedGenres = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+        const sortedGrouped = {};
+        sortedGenres.forEach((genre) => {
+            sortedGrouped[genre] = grouped[genre];
+        });
+
+        return sortedGrouped;
+        };
 
 
     const fetchWatchLaterMovies = async () => {
