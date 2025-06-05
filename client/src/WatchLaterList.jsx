@@ -257,6 +257,86 @@ const WatchLaterList = () => {
             console.error("Error removing watch later:", error);
         }
     };
+    
+        const searchInWatchlist = async (userId, query) => {
+            if (!userId) {
+                alert("You must be logged in to search your watchlist.");
+                return;
+            }
+
+            try {
+                setIsLoading(true);
+                const response = await fetch(`${API_BASE_URL}/api/watchlater/list/${userId}`);
+                if (!response.ok) throw new Error("Failed to fetch watch later");
+                
+                const watchLaterData = await response.json();
+                
+                // Filter locally if you want immediate feedback
+                const filteredMovies = watchLater.filter(movie => 
+                    movie.title.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                setWatchLater(filteredMovies);
+                setGroupedMovies(groupByGenre(filteredMovies));
+                setSearchQuery(query);
+            } catch (error) {
+                console.error("Search error:", error);
+                alert("Failed to search watchlist.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        const sortWatchlist = async (userId, sortBy) => {
+            if (!userId) {
+                alert("You must be logged in to sort your watchlist.");
+                return;
+            }
+
+            try {
+                setIsLoading(true);
+                const response = await fetch(`${API_BASE_URL}/api/watchlater/list/${userId}`);
+                if (!response.ok) throw new Error("Failed to fetch watch later");
+                
+                let watchLaterData = await response.json();
+                
+                // Fetch complete details for sorting if needed
+                const moviesWithDetails = await Promise.all(
+                    watchLaterData.map(async (item) => {
+                        const details = await fetchMovieDetails(item.movieId);
+                        return {
+                            ...item,
+                            ...details,
+                            genres: details.genres || [],
+                        };
+                    })
+                );
+
+                // Apply sorting
+                let sortedMovies = [...moviesWithDetails];
+                switch (sortBy) {
+                    case 'rating':
+                        sortedMovies.sort((a, b) => b.vote_average - a.vote_average);
+                        break;
+                    case 'releaseDate':
+                        sortedMovies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+                        break;
+                    case 'title':
+                        sortedMovies.sort((a, b) => a.title.localeCompare(b.title));
+                        break;
+                    default:
+                        break;
+                }
+
+                setWatchLater(sortedMovies);
+                setGroupedMovies(groupByGenre(sortedMovies));
+            } catch (error) {
+                console.error("Sorting error:", error);
+                alert("Failed to sort watchlist.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
     async function showMovieDetails(movieId) {
         try {
@@ -292,7 +372,40 @@ const WatchLaterList = () => {
                     </div>
                 </div>
             </div>
-
+            
+            <div className="container mb-4 bg-black rounded p-4">
+            <div className="row justify-content-center">
+                <div className="col-md-7 d-flex justify-content-center mb-2">
+                <div className="input-group w-100">
+                    <input
+                    type="text"
+                    className="form-control bg-dark text-white border-secondary"
+                    placeholder="Search in your watchlist..."
+                    value={searchQuery}
+                    onChange={(e) => searchInWatchlist(email, e.target.value)}
+                    />
+                    <button 
+                    className="btn btn-outline-danger" 
+                    onClick={() => searchInWatchlist(email, searchQuery)}
+                    >
+                    Search
+                    </button>
+                </div>
+                </div>
+                <div className="col-md-2 d-flex mb-2">
+                <select 
+                    className="form-select bg-dark text-white border-secondary"
+                    onChange={(e) => sortWatchlist(email, e.target.value)}
+                >
+                    <option value="">Sort by...</option>
+                    <option value="rating">Rating</option>
+                    <option value="releaseDate">Release Date</option>
+                    <option value="title">Title</option>
+                </select>
+                </div>
+            </div>
+            </div>
+            
             <div className="container mt-5">
                 {isLoading && <p className="text-white text-center">Loading...</p>}
                 {watchLater.length === 0 ? (

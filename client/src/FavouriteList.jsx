@@ -235,6 +235,80 @@ const FavouriteList = () => {
       console.error("Error fetching movie details:", error);
     }
   }
+  const searchInFavourites = async (userId, query) => {
+    if (!userId) {
+        alert("You must be logged in to search your favourites.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/favourite/list/${userId}`);
+        if (!response.ok) throw new Error("Failed to fetch favourites");
+        
+        const favouriteData = await response.json();
+        
+        // Filter locally for immediate feedback
+        const filteredMovies = favouriteMovies.filter(movie => 
+            movie.title.toLowerCase().includes(query.toLowerCase())
+        );
+        
+        setFavouriteMovies(filteredMovies);
+        setGroupedMovies(groupByGenre(filteredMovies));
+        setSearchQuery(query);
+    } catch (error) {
+        console.error("Search error:", error);
+        alert("Failed to search favourites.");
+    }
+};
+
+const sortFavourites = async (userId, sortBy) => {
+    if (!userId) {
+        alert("You must be logged in to sort your favourites.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/favourite/list/${userId}`);
+        if (!response.ok) throw new Error("Failed to fetch favourites");
+        
+        let favouriteData = await response.json();
+        
+        // Fetch complete details for sorting
+        const moviesWithDetails = await Promise.all(
+            favouriteData.map(async (item) => {
+                const details = await fetchMovieDetails(item.movieId);
+                return {
+                    ...item,
+                    ...details,
+                    genres: details.genres || [],
+                };
+            })
+        );
+
+        // Apply sorting
+        let sortedMovies = [...moviesWithDetails];
+        switch (sortBy) {
+            case 'rating':
+                sortedMovies.sort((a, b) => b.vote_average - a.vote_average);
+                break;
+            case 'releaseDate':
+                sortedMovies.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+                break;
+            case 'title':
+                sortedMovies.sort((a, b) => a.title.localeCompare(b.title));
+                break;
+            default:
+                break;
+        }
+
+        setFavouriteMovies(sortedMovies);
+        setGroupedMovies(groupByGenre(sortedMovies));
+    } catch (error) {
+        console.error("Sorting error:", error);
+        alert("Failed to sort favourites.");
+    }
+};
+
 
   return (
     <>
@@ -259,6 +333,39 @@ const FavouriteList = () => {
           </div>
         </div>
       </div>
+
+      <div className="container mb-4 bg-black rounded p-4">
+            <div className="row justify-content-center">
+                <div className="col-md-7 d-flex justify-content-center mb-2">
+                <div className="input-group w-100">
+                    <input
+                    type="text"
+                    className="form-control bg-dark text-white border-secondary"
+                    placeholder="Search in your watchlist..."
+                    value={searchQuery}
+                    onChange={(e) => searchInFavourites(email, e.target.value)}
+                    />
+                    <button 
+                    className="btn btn-outline-danger" 
+                    onClick={() => searchInFavourites(email, searchQuery)}
+                    >
+                    Search
+                    </button>
+                </div>
+                </div>
+                <div className="col-md-2 d-flex mb-2">
+                <select 
+                    className="form-select bg-dark text-white border-secondary"
+                    onChange={(e) => sortFavourites(email, e.target.value)}
+                >
+                    <option value="">Sort by...</option>
+                    <option value="rating">Rating</option>
+                    <option value="releaseDate">Release Date</option>
+                    <option value="title">Title</option>
+                </select>
+                </div>
+            </div>
+            </div>
 
       <div className="container mt-5">
         {favouriteMovies.length === 0 ? (
