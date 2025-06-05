@@ -460,7 +460,7 @@ const WatchLaterList = () => {
                     Object.entries(groupedMovies).map(([groupName, movies]) => (
                     <GenreGroup key={groupName}>
                         <h3 className="text-white mb-3">
-                        {groupName.includes("(Sorted)") ? (
+                        {groupName.includes("") ? (
                             <span style={{ color: "#ff6b6b" }}>{groupName}</span>
                         ) : (
                             groupName

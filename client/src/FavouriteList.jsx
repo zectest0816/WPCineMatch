@@ -362,7 +362,7 @@ const FavouriteList = () => {
 
     // When sorting is active, show both sections
     setGroupedMovies({
-      "All Movies (Sorted)": sortedMovies, // Top section
+      "All Movies": sortedMovies, // Top section
       ...groupByGenre(sortedMovies)        // Bottom section (grouped by genre)
     });
   };
