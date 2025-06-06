@@ -52,8 +52,8 @@ app.post("/register", async (req, res) => {
 // Comments routes
 app.post('/comments', async (req, res) => {
   try {
-    const { movieId, user, text } = req.body;
-    const comment = await CommentModel.create({ movieId, user, text });
+    const { movieId, user, text, rating } = req.body;
+    const comment = await CommentModel.create({ movieId, user, text, rating });
     res.status(201).json(comment);
   } catch (err) {
     res.status(500).json({ error: "Error saving comment" });
@@ -71,8 +71,12 @@ app.get('/comments/:movieId', async (req, res) => {
 
 // PATCH for editing
 app.patch("/comments/:commentId", async (req, res) => {
-  const { text } = req.body;
-  const updated = await CommentModel.findByIdAndUpdate(req.params.commentId, { text }, { new: true });
+  const { text, rating } = req.body;
+  const updated = await CommentModel.findByIdAndUpdate(
+    req.params.commentId,
+    { text, rating },
+    { new: true }
+  );
   res.json(updated);
 });
 
@@ -89,7 +93,7 @@ app.get('/users/:userId', async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     const userResponse = user.toObject();
     delete userResponse.password;
     res.json(userResponse);
@@ -106,11 +110,11 @@ app.patch('/users/:userId', async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     );
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    
+
     const userResponse = user.toObject();
     delete userResponse.password;
     res.json(userResponse);

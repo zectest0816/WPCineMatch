@@ -410,7 +410,7 @@ const Trending = () => {
                   justifyContent: "center",
                   gap: "10px",
                   marginTop: "10px",
-                  marginLeft: "-230px" // Adjust this value as needed
+                  marginLeft: "-230px" 
                 }}>
                   <HeartButton
                     $isAdded={favouriteMovieIds.includes(selectedMovie.id)}

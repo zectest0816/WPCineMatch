@@ -38,6 +38,9 @@ const Home = () => {
   const [activeMenu, setActiveMenu] = useState(null); // Tracks which comment's menu is open
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editText, setEditText] = useState("");
+  const [rating, setRating] = useState(0);
+  const [editRating, setEditRating] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const navigate = useNavigate();
   const [fadeText, setFadeText] = useState(true);
@@ -59,17 +62,18 @@ const Home = () => {
     setActiveMenu(activeMenu === id ? null : id);
   };
 
-  const handleEditClick = (id, text) => {
+  const handleEditClick = (id, text, rating) => {
     setEditingCommentId(id);
     setEditText(text);
-    setActiveMenu(null); // close menu
+    setEditRating(rating);
+    setActiveMenu(null);
   };
 
   const handleEditSave = async (id) => {
     await fetch(`http://localhost:3001/comments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: editText }),
+      body: JSON.stringify({ text: editText, rating: editRating }),
     });
     setEditingCommentId(null);
     fetchComments(selectedMovie.id);
@@ -217,25 +221,29 @@ const Home = () => {
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
+    if (!commentText || rating === 0) {
+      setErrorMessage("Please enter a comment and select a rating.");
+      setTimeout(() => setErrorMessage(""), 3000);
+    }
 
-    const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
+    try {
+      await fetch(`http://localhost:3001/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieId: selectedMovie.id,
+          user: userId,
+          text: commentText,
+          rating,
+        }),
+      });
 
-    const response = await fetch("http://localhost:3001/comments", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        movieId: selectedMovie.id,
-        user: userEmail,
-        text: commentText,
-      }),
-    });
-
-    const newComment = await response.json();
-    setComments([newComment, ...comments]);
-    setCommentText("");
+      setCommentText("");
+      setRating(0);
+      fetchComments(selectedMovie.id);
+    } catch (error) {
+      console.error("Failed to submit comment:", error);
+    }
   };
 
   const startScroll = (genre, direction) => {
@@ -451,6 +459,26 @@ const Home = () => {
                 <div className="comment-section mt-4">
                   <h4 className="text-light mb-3">Comments</h4>
                   <form onSubmit={handleCommentSubmit} className="mb-4">
+                    {errorMessage && (
+                      <div
+                        className="alert alert-danger"
+                        role="alert"
+                        style={{ marginBottom: "1rem" }}
+                      >
+                        {errorMessage}
+                      </div>
+                    )}
+
+                    <div className="mb-2 text-warning">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <i
+                          key={star}
+                          className={`bi bi-star${star <= rating ? "-fill" : ""}`}
+                          style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                          onClick={() => setRating(star)}
+                        ></i>
+                      ))}
+                    </div>
                     <div className="input-group">
                       <textarea
                         className="form-control bg-dark text-light border-secondary"
@@ -508,6 +536,16 @@ const Home = () => {
                                   value={editText}
                                   onChange={(e) => setEditText(e.target.value)}
                                 />
+                                <div className="mb-2 text-warning">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <i
+                                      key={star}
+                                      className={`bi bi-star${star <= editRating ? "-fill" : ""}`}
+                                      style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                                      onClick={() => setEditRating(star)}
+                                    ></i>
+                                  ))}
+                                </div>
                                 <div className="mt-2">
                                   <button
                                     className="btn btn-success btn-sm me-2"
@@ -524,7 +562,21 @@ const Home = () => {
                                 </div>
                               </>
                             ) : (
-                              <p className="mb-0 text-light">{comment.text}</p>
+                              <>
+                                {/* Rating stars */}
+                                <div className="d-flex align-items-center mb-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <i
+                                      key={star}
+                                      className={`bi bi-star${star <= comment.rating ? "-fill" : ""}`}
+                                      style={{ color: "#f5c518", marginRight: "2px" }}
+                                    ></i>
+                                  ))}
+                                </div>
+
+                                {/* Comment text */}
+                                <p className="mb-0 text-light">{comment.text}</p>
+                              </>
                             )}
                           </div>
 
