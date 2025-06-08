@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react"
 import { userApi } from "./api"
 import "./styles/profile.css"
-import Navbar from "./Navbar";
-
+import Navbar from "./Navbar"
+import { useNavigate } from "react-router-dom"
 
 const Profile = () => {
+  const navigate = useNavigate()
+
   // State for user data
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -28,33 +30,60 @@ const Profile = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Fetch user data on component mount
-  console.log("Fetching user data...")
-  const userId = localStorage.getItem('userId');
-  console.log("userId", userId)
-
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        setLoading(true);
-        console.log("Fetching user data from mockdata.json...");
-  
-        // Fetch the mock data
-        const response = await fetch("/mockdata.json");
-        const userData = await response.json();
-  
-        setUser(userData);
-        console.log("Fetched user data:", userData);
-        setEditedUser(userData);
+        setLoading(true)
+        const userEmail = localStorage.getItem("userEmail")
+
+        if (!userEmail) {
+          setError("User not logged in. Please log in to view profile.")
+          navigate("/login")
+          return
+        }
+
+        console.log("Fetching user data for email:", userEmail)
+
+        // First, try to get user by email to get the userId
+        try {
+          const response = await fetch(`http://localhost:3001/users/by-email/${userEmail}`)
+          if (response.ok) {
+            const userData = await response.json()
+            console.log("Fetched user data:", userData)
+
+            // Store the userId for future use
+            if (userData._id) {
+              localStorage.setItem("userId", userData._id)
+            }
+
+            setUser(userData)
+            setEditedUser(userData)
+          } else {
+            throw new Error("User not found")
+          }
+        } catch (emailError) {
+          console.log("Email lookup failed, trying direct user lookup...")
+
+          // Fallback: try to get user data directly if we have userId
+          const userId = localStorage.getItem("userId")
+          if (userId) {
+            const userData = await userApi.getUserProfile(userId)
+            setUser(userData)
+            setEditedUser(userData)
+          } else {
+            throw new Error("Cannot find user data")
+          }
+        }
       } catch (err) {
-        setError("Failed to load profile data. Please try again later.");
-        console.error("Error fetching user data:", err);
+        setError("Failed to load profile data. Please try again later.")
+        console.error("Error fetching user data:", err)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-  
-    fetchUserData();
-  }, []);
+    }
+
+    fetchUserData()
+  }, [navigate])
 
   // Handle input changes for profile edit
   const handleEditChange = (e) => {
@@ -79,12 +108,15 @@ const Profile = () => {
     e.preventDefault()
     try {
       setLoading(true)
-      await userApi.updateProfile(editedUser)
-      setUser(editedUser)
+
+      // Use the existing updateProfile function from your api.js
+      const updatedUser = await userApi.updateProfile(user._id, editedUser)
+      setUser(updatedUser)
+      setEditedUser(updatedUser)
       setIsEditing(false)
       alert("Profile updated successfully!")
     } catch (err) {
-      alert("Failed to update profile. Please try again.")
+      alert(`Failed to update profile: ${err.message}`)
       console.error("Error updating profile:", err)
     } finally {
       setLoading(false)
@@ -108,7 +140,13 @@ const Profile = () => {
 
     try {
       setLoading(true)
-      await userApi.changePassword(passwordData)
+
+      // Use the existing changePassword function from your api.js
+      await userApi.changePassword(user._id, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      })
+
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -117,7 +155,7 @@ const Profile = () => {
       setShowPasswordForm(false)
       alert("Password changed successfully!")
     } catch (err) {
-      alert("Failed to change password. Please check your current password and try again.")
+      alert(`Failed to change password: ${err.message}`)
       console.error("Error changing password:", err)
     } finally {
       setLoading(false)
@@ -128,12 +166,17 @@ const Profile = () => {
   const deleteAccount = async () => {
     try {
       setLoading(true)
-      await userApi.deleteAccount()
+
+      // Use the existing deleteAccount function from your api.js
+      await userApi.deleteAccount(user._id)
       alert("Account deleted successfully!")
-      // Redirect to login page or home page after deletion
-      window.location.href = "/login"
+      // Clear local storage
+      localStorage.removeItem("userId")
+      localStorage.removeItem("userEmail")
+      // Redirect to login page after deletion
+      navigate("/login")
     } catch (err) {
-      alert("Failed to delete account. Please try again.")
+      alert(`Failed to delete account: ${err.message}`)
       console.error("Error deleting account:", err)
     } finally {
       setLoading(false)
@@ -165,19 +208,8 @@ const Profile = () => {
   }
 
   return (
-    
     <div className="netflix-profile">
-        <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
-        <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
-          🎬 MovieExplorer
-        </a>
-        <button
-          className="btn btn-outline-light ms-auto"
-          onClick={() => navigate("/search")}
-        >
-          🔍 Search
-        </button>
-      </Navbar>
+      <Navbar />
       <div className="profile-header">
         <h1>Account</h1>
         <div className="membership-since">
@@ -203,6 +235,7 @@ const Profile = () => {
               <div className="info-label">Phone</div>
               <div className="info-value">{user.phoneNumber || "Not provided"}</div>
             </div>
+
             <button className="netflix-button secondary" onClick={() => setIsEditing(true)} disabled={loading}>
               Edit Profile
             </button>
@@ -241,6 +274,7 @@ const Profile = () => {
                 onChange={handleEditChange}
               />
             </div>
+            
             <div className="form-actions">
               <button type="submit" className="netflix-button primary" disabled={loading}>
                 {loading ? "Saving..." : "Save Changes"}
