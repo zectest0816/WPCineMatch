@@ -1,41 +1,58 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import "./styles/login.css";
-import bgImage from "./assets/netflix-background-gs7hjuwvv2g0e9fj.jpg";
-import { useAuth } from "./AuthContext";
+"use client"
+
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import axios from "axios"
+import "./styles/login.css"
+import bgImage from "./assets/netflix-background-gs7hjuwvv2g0e9fj.jpg"
+import { useAuth } from "./AuthContext"
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const navigate = useNavigate();
-  const { setIsLoggedIn } = useAuth();
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
+  const navigate = useNavigate()
+  const { setIsLoggedIn } = useAuth()
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!email || !password) {
-      setErrorMessage("Please fill in both email and password.");
-      return;
+      setErrorMessage("Please fill in both email and password.")
+      return
     }
     axios
       .post("http://localhost:3001/login", { email, password })
       .then((result) => {
-        console.log(result);
+        console.log(result)
         if (result.data === "Success") {
-          localStorage.setItem("userEmail", email);
-          setIsLoggedIn(true);
-          navigate("/home");
+          localStorage.setItem("userEmail", email)
+
+          // Fetch user ID after successful login
+          axios
+            .get(`http://localhost:3001/users/by-email/${email}`)
+            .then((userResult) => {
+              if (userResult.data && userResult.data._id) {
+                localStorage.setItem("userId", userResult.data._id)
+                console.log("User ID stored:", userResult.data._id)
+              }
+              setIsLoggedIn(true)
+              navigate("/home")
+            })
+            .catch((err) => {
+              console.log("Error fetching user ID:", err)
+              // Still log in even if we can't get the ID
+              setIsLoggedIn(true)
+              navigate("/home")
+            })
         } else {
-          setErrorMessage("Invalid email or password.");
+          setErrorMessage("Invalid email or password.")
         }
       })
       .catch((err) => {
-        console.log(err);
-        setErrorMessage("Login failed. Please try again.");
-      });
-  };
-
+        console.log(err)
+        setErrorMessage("Login failed. Please try again.")
+      })
+  }
   return (
     <div
       className="d-flex justify-content-center align-items-center vh-100"
