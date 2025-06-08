@@ -1,5 +1,5 @@
 import Navbar from "./Navbar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   fetchMoviesByGenre,
   fetchMovieDetails,
@@ -8,46 +8,11 @@ import {
 } from "./api.js";
 import "./styles/home.js";
 import { useNavigate } from "react-router-dom";
-import styled from 'styled-components';
-import { API_BASE_URL } from './config';
-import HeartButton from './components/HeartButton';
-import WatchLaterButton from './components/WatchLaterButton';
+import styled from "styled-components";
+import { API_BASE_URL } from "./config";
+import HeartButton from "./components/HeartButton";
+import WatchLaterButton from "./components/WatchLaterButton";
 
-// Styled Components
-const MovieCard = styled.div`
-  cursor: pointer;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: transform 0.3s ease;
-  background-color: #141414;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-
-  &:hover {
-    transform: scale(1.08);
-  }
-`;
-
-const MovieTitleOverlay = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px;
-  background: linear-gradient(
-    to top,
-    rgba(20, 20, 20, 0.9),
-    rgba(20, 20, 20, 0)
-  );
-  color: white;
-  font-weight: bold;
-  font-size: 1rem;
-`;
-
-const MovieWrapper = styled.div`
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-`;
 
 const MovieContainer = styled.div`
   position: relative;
@@ -62,13 +27,6 @@ const genres = [
   { id: 16, name: "Animation" },
 ];
 
-const MoviePoster = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
-`;
-
 const Home = () => {
   const [genreMovies, setGenreMovies] = useState({});
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -77,8 +35,19 @@ const Home = () => {
   const [favouriteMovieIds, setFavouriteIds] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
+  const [activeMenu, setActiveMenu] = useState(null); // Tracks which comment's menu is open
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [rating, setRating] = useState(0);
+  const [editRating, setEditRating] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const navigate = useNavigate();
-  
+  const [fadeText, setFadeText] = useState(true);
+  const [scrollInterval, setScrollInterval] = useState(null);
+  const scrollRefs = useRef({});
+  const userId = localStorage.getItem("userEmail");
+
   const fetchComments = async (movieId) => {
     try {
       const response = await fetch(`http://localhost:3001/comments/${movieId}`);
@@ -87,7 +56,34 @@ const Home = () => {
     } catch (error) {
       console.error("Failed to fetch comments:", error);
     }
-  };  
+  };
+
+  const toggleMenu = (id) => {
+    setActiveMenu(activeMenu === id ? null : id);
+  };
+
+  const handleEditClick = (id, text, rating) => {
+    setEditingCommentId(id);
+    setEditText(text);
+    setEditRating(rating);
+    setActiveMenu(null);
+  };
+
+  const handleEditSave = async (id) => {
+    await fetch(`http://localhost:3001/comments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: editText, rating: editRating }),
+    });
+    setEditingCommentId(null);
+    fetchComments(selectedMovie.id);
+  };
+
+  const handleDelete = async (id) => {
+    await fetch(`http://localhost:3001/comments/${id}`, { method: "DELETE" });
+    setActiveMenu(null);
+    fetchComments(selectedMovie.id);
+  };
 
   useEffect(() => {
     const loadAllGenres = async () => {
@@ -100,6 +96,19 @@ const Home = () => {
     loadAllGenres();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHeroIndex(
+        (prevIndex) =>
+          (prevIndex + 1) % (genreMovies["Action"]?.slice(0, 5).length || 1)
+      );
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [genreMovies]);
+
+  const heroMovies = genreMovies["Action"]?.slice(0, 5) || [];
+  const featuredMovie = heroMovies[currentHeroIndex];
+
   async function showMovieDetails(movieId) {
     const movie = await fetchMovieDetails(movieId);
     const trailer = await fetchMovieTrailer(movieId);
@@ -108,7 +117,6 @@ const Home = () => {
     fetchComments(movieId);
   }
 
-  // Favourite functionality with optimistic updates
   const toggleFavourite = async (movie, event) => {
     event.stopPropagation();
     try {
@@ -121,16 +129,14 @@ const Home = () => {
       const isAdded = favouriteMovieIds.includes(movie.id);
       let updatedIds;
 
-      // Optimistic update
       if (isAdded) {
-        updatedIds = favouriteMovieIds.filter(id => id !== movie.id);
+        updatedIds = favouriteMovieIds.filter((id) => id !== movie.id);
         setFavouriteIds(updatedIds);
       } else {
         updatedIds = [...favouriteMovieIds, movie.id];
         setFavouriteIds(updatedIds);
       }
 
-      // API call
       const endpoint = isAdded
         ? `${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`
         : `${API_BASE_URL}/api/favourite/add`;
@@ -138,20 +144,23 @@ const Home = () => {
       const response = await fetch(endpoint, {
         method: isAdded ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: isAdded ? null : JSON.stringify({
-          userId,
-          movieId: movie.id,
-          title: movie.title,
-          poster_path: movie.poster_path,
-        })
+        body: isAdded
+          ? null
+          : JSON.stringify({
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+          }),
       });
 
       if (!response.ok) {
-        // Rollback on error
-        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${userId}`);
+        const favResponse = await fetch(
+          `${API_BASE_URL}/api/favourite/list/${userId}`
+        );
         const favData = await favResponse.json();
-        setFavouriteIds(favData.map(item => item.movieId));
-        throw new Error(`Failed to ${isAdded ? 'remove' : 'add'} favorite`);
+        setFavouriteIds(favData.map((item) => item.movieId));
+        throw new Error(`Failed to ${isAdded ? "remove" : "add"} favorite`);
       }
     } catch (err) {
       console.error("Favourite toggle error:", err);
@@ -159,30 +168,6 @@ const Home = () => {
     }
   };
 
-  const handleCommentSubmit = async (e) => {
-    e.preventDefault();
-    if (!commentText.trim()) return;
-
-    const userEmail = localStorage.getItem("userEmail") || "guest@example.com";
-
-    const response = await fetch("http://localhost:3001/comments", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        movieId: selectedMovie.id,
-        user: userEmail,
-        text: commentText,
-      }),
-    });
-
-    const newComment = await response.json();
-    setComments([newComment, ...comments]);
-    setCommentText("");
-  };
-
-  // Watch Later functionality with optimistic updates
   const toggleWatchLater = async (movie, event) => {
     event.stopPropagation();
     try {
@@ -195,16 +180,14 @@ const Home = () => {
       const isAdded = watchLaterMovieIds.includes(movie.id);
       let updatedIds;
 
-      // Optimistic update
       if (isAdded) {
-        updatedIds = watchLaterMovieIds.filter(id => id !== movie.id);
+        updatedIds = watchLaterMovieIds.filter((id) => id !== movie.id);
         setWatchLaterMovieIds(updatedIds);
       } else {
         updatedIds = [...watchLaterMovieIds, movie.id];
         setWatchLaterMovieIds(updatedIds);
       }
 
-      // API call
       const endpoint = isAdded
         ? `${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`
         : `${API_BASE_URL}/api/watchlater/add`;
@@ -212,20 +195,23 @@ const Home = () => {
       const response = await fetch(endpoint, {
         method: isAdded ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: isAdded ? null : JSON.stringify({
-          userId,
-          movieId: movie.id,
-          title: movie.title,
-          poster_path: movie.poster_path,
-        })
+        body: isAdded
+          ? null
+          : JSON.stringify({
+            userId,
+            movieId: movie.id,
+            title: movie.title,
+            poster_path: movie.poster_path,
+          }),
       });
 
       if (!response.ok) {
-        // Rollback on error
-        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${userId}`);
+        const wlResponse = await fetch(
+          `${API_BASE_URL}/api/watchlater/list/${userId}`
+        );
         const wlData = await wlResponse.json();
-        setWatchLaterMovieIds(wlData.map(item => item.movieId));
-        throw new Error(`Failed to ${isAdded ? 'remove' : 'add'} watch later`);
+        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
+        throw new Error(`Failed to ${isAdded ? "remove" : "add"} watch later`);
       }
     } catch (err) {
       console.error("Watch Later toggle error:", err);
@@ -233,29 +219,67 @@ const Home = () => {
     }
   };
 
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!commentText || rating === 0) {
+      setErrorMessage("Please enter a comment and select a rating.");
+      setTimeout(() => setErrorMessage(""), 3000);
+    }
+
+    try {
+      await fetch(`http://localhost:3001/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieId: selectedMovie.id,
+          user: userId,
+          text: commentText,
+          rating,
+        }),
+      });
+
+      setCommentText("");
+      setRating(0);
+      fetchComments(selectedMovie.id);
+    } catch (error) {
+      console.error("Failed to submit comment:", error);
+    }
+  };
+
+  const startScroll = (genre, direction) => {
+    const container = scrollRefs.current[genre];
+    const amount = direction === "left" ? -2 : 2;
+    const interval = setInterval(() => {
+      container.scrollLeft += amount;
+    }, 10);
+    setScrollInterval(interval);
+  };
+
+  const stopScroll = () => clearInterval(scrollInterval);
+
   useEffect(() => {
     const fetchUserData = async () => {
       const userId = localStorage.getItem("userEmail");
       if (!userId) return;
 
       try {
-        // Fetch favorites
-        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${userId}`);
+        const favResponse = await fetch(
+          `${API_BASE_URL}/api/favourite/list/${userId}`
+        );
         const favData = await favResponse.json();
-        setFavouriteIds(favData.map(item => item.movieId));
+        setFavouriteIds(favData.map((item) => item.movieId));
 
-        // Fetch watch later
-        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${userId}`);
+        const wlResponse = await fetch(
+          `${API_BASE_URL}/api/watchlater/list/${userId}`
+        );
         const wlData = await wlResponse.json();
-        setWatchLaterMovieIds(wlData.map(item => item.movieId));
+        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
       } catch (error) {
         console.error("Fetch error:", error);
       }
     };
     fetchUserData();
   }, []);
-
-  const featuredMovie = genreMovies["Action"]?.[0];
 
   return (
     <>
@@ -271,12 +295,12 @@ const Home = () => {
         </button>
       </Navbar>
 
-      {/* Hero Banner */}
       {featuredMovie && (
         <div
           className="hero-banner"
           style={{
             backgroundImage: `url(${IMAGE_BASE_URL}${featuredMovie.backdrop_path})`,
+            transition: "background-image 1s ease-in-out",
           }}
         >
           <div className="hero-overlay">
@@ -286,7 +310,17 @@ const Home = () => {
             <div className="hero-buttons">
               <button
                 className="hero-btn play"
-                onClick={() => showMovieDetails(featuredMovie.id)}
+                onClick={async () => {
+                  const trailer = await fetchMovieTrailer(featuredMovie.id);
+                  if (trailer) {
+                    window.open(
+                      `https://www.youtube.com/watch?v=${trailer}`,
+                      "_blank"
+                    );
+                  } else {
+                    alert("Trailer not available.");
+                  }
+                }}
               >
                 ▶ Play
               </button>
@@ -297,6 +331,17 @@ const Home = () => {
                 ℹ More Info
               </button>
             </div>
+          </div>
+
+          {/* Dots navigation */}
+          <div className="hero-dots">
+            {heroMovies.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${index === currentHeroIndex ? "active" : ""}`}
+                onClick={() => setCurrentHeroIndex(index)}
+              />
+            ))}
           </div>
         </div>
       )}
@@ -330,14 +375,21 @@ const Home = () => {
       {selectedMovie && (
         <div className="modal-overlay" onClick={() => setSelectedMovie(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-button" onClick={() => setSelectedMovie(null)}>
+            <button
+              className="close-button"
+              onClick={() => setSelectedMovie(null)}
+            >
               ✖
             </button>
             <div className="modal-body">
               <div className="poster-section">
                 <div className="poster-wrapper">
                   <img
-                    src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
+                    src={
+                      selectedMovie.poster_path
+                        ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
+                        : "https://via.placeholder.com/300x400?text=No+Image"
+                    }
                     alt={selectedMovie.title}
                     className="modal-poster"
                   />
@@ -345,17 +397,29 @@ const Home = () => {
                     <HeartButton
                       $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
                       onClick={(e) => toggleFavourite(selectedMovie, e)}
-                      title={favouriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
+                      title={
+                        favouriteMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Favorites"
+                          : "Add to Favorites"
+                      }
                     >
-                      {favouriteMovieIds.includes(selectedMovie.id) ? "❤️" : "🤍"}
+                      {favouriteMovieIds.includes(selectedMovie.id)
+                        ? "❤️"
+                        : "🤍"}
                     </HeartButton>
                     <WatchLaterButton
                       $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
                       onClick={(e) => toggleWatchLater(selectedMovie, e)}
-                      title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
-                      style={{ marginTop: '8px' }}
+                      title={
+                        watchLaterMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Watch Later"
+                          : "Add to Watch Later"
+                      }
+                      style={{ marginTop: "8px" }}
                     >
-                      {watchLaterMovieIds.includes(selectedMovie.id) ? "★" : "☆"}
+                      {watchLaterMovieIds.includes(selectedMovie.id)
+                        ? "★"
+                        : "☆"}
                     </WatchLaterButton>
                   </div>
                 </div>
@@ -364,10 +428,19 @@ const Home = () => {
                 <h2>{selectedMovie.title}</h2>
                 <p>{selectedMovie.overview}</p>
                 <div className="movie-details-grid">
-                  <p><strong>Release Date:</strong> {selectedMovie.release_date}</p>
-                  <p><strong>Rating:</strong> {selectedMovie.vote_average}/10</p>
-                  <p><strong>Runtime:</strong> {selectedMovie.runtime} mins</p>
-                  <p><strong>Genres:</strong> {selectedMovie.genres?.map(g => g.name).join(', ')}</p>
+                  <p>
+                    <strong>Release Date:</strong> {selectedMovie.release_date}
+                  </p>
+                  <p>
+                    <strong>Rating:</strong> {selectedMovie.vote_average}/10
+                  </p>
+                  <p>
+                    <strong>Runtime:</strong> {selectedMovie.runtime} mins
+                  </p>
+                  <p>
+                    <strong>Genres:</strong>{" "}
+                    {selectedMovie.genres?.map((g) => g.name).join(", ")}
+                  </p>
                 </div>
                 {trailerKey ? (
                   <div className="trailer">
@@ -386,6 +459,26 @@ const Home = () => {
                 <div className="comment-section mt-4">
                   <h4 className="text-light mb-3">Comments</h4>
                   <form onSubmit={handleCommentSubmit} className="mb-4">
+                    {errorMessage && (
+                      <div
+                        className="alert alert-danger"
+                        role="alert"
+                        style={{ marginBottom: "1rem" }}
+                      >
+                        {errorMessage}
+                      </div>
+                    )}
+
+                    <div className="mb-2 text-warning">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <i
+                          key={star}
+                          className={`bi bi-star${star <= rating ? "-fill" : ""}`}
+                          style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                          onClick={() => setRating(star)}
+                        ></i>
+                      ))}
+                    </div>
                     <div className="input-group">
                       <textarea
                         className="form-control bg-dark text-light border-secondary"
@@ -400,17 +493,21 @@ const Home = () => {
                       </button>
                     </div>
                   </form>
-                  <div className="comment-list overflow-auto" style={{ maxHeight: "300px" }}>
+                  <div
+                    className="comment-list overflow-auto"
+                    style={{ maxHeight: "300px" }}
+                  >
                     {comments.length > 0 ? (
                       comments.map((comment, idx) => (
                         <div
                           key={idx}
-                          className="d-flex mb-3 p-3 rounded"
+                          className="d-flex mb-3 p-3 rounded position-relative"
                           style={{
                             backgroundColor: "#1f1f1f",
                             boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
                           }}
                         >
+                          {/* Avatar */}
                           <div
                             className="flex-shrink-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3"
                             style={{
@@ -422,20 +519,113 @@ const Home = () => {
                           >
                             {comment.user.charAt(0).toUpperCase()}
                           </div>
+
+                          {/* Content */}
                           <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center mb-1">
+                            <div className="d-flex justify-content-between align-items-center mb-1" style={{ paddingRight: '20px' }}>
                               <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
-                              <small className="text-muted">
+                              <small style={{ color: 'white', fontSize: '0.75rem' }}>
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
                             </div>
-                            <p className="mb-0 text-light">{comment.text}</p>
+                            {/* Edit mode or display mode */}
+                            {editingCommentId === comment._id ? (
+                              <>
+                                <input
+                                  className="form-control"
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                />
+                                <div className="mb-2 text-warning">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <i
+                                      key={star}
+                                      className={`bi bi-star${star <= editRating ? "-fill" : ""}`}
+                                      style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                                      onClick={() => setEditRating(star)}
+                                    ></i>
+                                  ))}
+                                </div>
+                                <div className="mt-2">
+                                  <button
+                                    className="btn btn-success btn-sm me-2"
+                                    onClick={() => handleEditSave(comment._id)}
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={() => setEditingCommentId(null)}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                {/* Rating stars */}
+                                <div className="d-flex align-items-center mb-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <i
+                                      key={star}
+                                      className={`bi bi-star${star <= comment.rating ? "-fill" : ""}`}
+                                      style={{ color: "#f5c518", marginRight: "2px" }}
+                                    ></i>
+                                  ))}
+                                </div>
+
+                                {/* Comment text */}
+                                <p className="mb-0 text-light">{comment.text}</p>
+                              </>
+                            )}
                           </div>
+
+                          {/* Three-dot menu button - Only show if the comment belongs to current user */}
+                          {comment.user === userId && (
+                            <div className="position-absolute top-0 end-0 p-2">
+                              <button
+                                className="btn btn-sm text-white"
+                                onClick={() => toggleMenu(comment._id)}
+                                style={{ background: "none", border: "none" }}
+                              >
+                                &#8942;
+                              </button>
+                              {activeMenu === comment._id && (
+                                <div
+                                  className="dropdown-menu show"
+                                  style={{
+                                    position: "absolute",
+                                    right: 0,
+                                    top: "100%",
+                                    backgroundColor: "#2c2c2c",
+                                    border: "1px solid #444",
+                                  }}
+                                >
+                                  <button
+                                    className="dropdown-item text-white"
+                                    style={{ backgroundColor: "#2c2c2c" }}
+                                    onClick={() => handleEditClick(comment._id, comment.text)}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="dropdown-item text-danger"
+                                    style={{ backgroundColor: "#2c2c2c" }}
+                                    onClick={() => handleDelete(comment._id)}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                         </div>
                       ))
                     ) : (
                       <p className="text-muted">No comments yet. Be the first!</p>
                     )}
+
                   </div>
                 </div>
               </div>

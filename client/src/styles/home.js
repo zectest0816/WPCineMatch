@@ -22,6 +22,52 @@ style.innerHTML = `
   transform: scale(1.08);
 }
 
+.movie-slider-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.movie-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 10px 0;
+}
+
+.movie-card {
+  min-width: 150px;
+  margin: 0 8px;
+  cursor: pointer;
+  position: relative;
+}
+
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  padding: 10px;
+  z-index: 2;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.scroll-btn:hover {
+  background-color: rgba(255, 255, 255, 0.7);
+  color: black;
+}
+
+.scroll-btn.left {
+  left: 0;
+}
+
+.scroll-btn.right {
+  right: 0;
+}
+
 .scroll-button {
   position: absolute;
   top: 50%;
@@ -199,12 +245,45 @@ display: inline-block;
     bottom: 20%;
     left: 5%;
     max-width: 600px;
+    transition: opacity 0.3s ease-in-out;
   }
+
+.hero-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.4);
+  transition: background-color 0.3s ease;
+}
+
+.dot.active {
+  background-color: white;
+}
+
 
   .hero-title {
     font-size: 3rem;
     font-weight: bold;
   }
+
+  .fade-in {
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 0;
+}
 
   .hero-rank {
     margin-top: 1rem;
@@ -266,7 +345,7 @@ display: inline-block;
     color: #fff;
     font-weight: bold;
   }
+    
 `;
-
 
 document.head.appendChild(style);

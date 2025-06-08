@@ -1,7 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, use } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSearch, FaChartBar, FaBookmark, FaUserCircle } from "react-icons/fa";
+import { FaSearch, FaChartBar, FaBookmark, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 import "./styles/navbar.css";
+
+export const SearchProvider = ({ children }) => {
+  return (
+    <SearchContext.Provider value={{ query, setQuery }}>
+      {children}
+    </SearchContext.Provider>
+  );
+};
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -13,10 +21,9 @@ const Navbar = () => {
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleSearchSubmit();
-    }
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
   };
 
   return (
@@ -31,11 +38,14 @@ const Navbar = () => {
         <div className="search-box">
           <FaSearch className="search-icon" onClick={handleSearchSubmit} />
           <input
-            type="text"
-            placeholder="Search movies..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSearchSubmit();
+              }
+            }}
           />
         </div>
       </div>
@@ -55,6 +65,11 @@ const Navbar = () => {
           className="nav-icon profile-icon"
           title="Profile"
           onClick={() => navigate("/profile")}
+        />
+        <FaSignOutAlt
+          className="nav-icon"
+          title="Logout"
+          onClick={handleLogout}
         />
       </div>
     </div>
