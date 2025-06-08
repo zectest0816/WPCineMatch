@@ -1,17 +1,17 @@
-import Navbar from "./Navbar";
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
 import {
-  fetchMoviesByGenre,
   fetchMovieDetails,
+  fetchMoviesByGenre,
   fetchMovieTrailer,
   IMAGE_BASE_URL,
 } from "./api.js";
-import "./styles/home.js";
-import { useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import { API_BASE_URL } from "./config";
 import HeartButton from "./components/HeartButton";
 import WatchLaterButton from "./components/WatchLaterButton";
+import { API_BASE_URL } from "./config";
+import Navbar from "./Navbar";
+import "./styles/home.js";
 
 
 const MovieContainer = styled.div`
