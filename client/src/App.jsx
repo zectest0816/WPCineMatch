@@ -2,19 +2,19 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+import { AuthProvider } from "./AuthContext";
 import Bookmark from "./Bookmark";
 import Favourite from "./FavouriteList";
 import Home from "./Home";
 import Landing from "./Landing";
 import Login from "./Login";
-import Search from "./Search";
 import Profile from "./profile";
+import ProtectedRoute from "./ProtectedRoute";
+import Search from "./Search";
 import Signup from "./Signup";
 import "./styles/font.css";
-import Trending from "./trending";
+import Trending from "./Trending";
 import WatchLater from "./WatchLaterList";
-import { AuthProvider } from "./AuthContext";
-import ProtectedRoute from "./ProtectedRoute";
 
 function App() {
   const [count, setCount] = useState(0);
