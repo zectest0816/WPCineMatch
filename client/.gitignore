@@ -25,3 +25,5 @@ dist-ssr
 
 # Environment variables
 .env
+client/.env
+server/.env

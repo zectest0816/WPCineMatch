@@ -17,15 +17,15 @@ app.use(express.json());
 app.use(cors());
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
 app.post("/api/chat", async (req, res) => {
   const userMessage = req.body.message;
   console.log("💬 Received from frontend:", userMessage);
 
   try {
-    const chat = model.startChat();
-    const result = await chat.sendMessage(userMessage);
+    const chat = model.startChat(); 
+    const result = await chat.sendMessage(userMessage); 
     const response = result.response.text();
     console.log("🤖 Gemini reply:", response);
     res.json({ reply: response });
