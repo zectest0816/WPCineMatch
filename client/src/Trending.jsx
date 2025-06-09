@@ -1007,6 +1007,9 @@ const Trending = () => {
           </ModalContent>
         </ModalOverlay>
       )}
+      <footer className="landing-footer">
+        <p>&copy; {new Date().getFullYear()} CineMatch. All rights reserved.</p>
+      </footer>
     </PageContainer>
   );
 };

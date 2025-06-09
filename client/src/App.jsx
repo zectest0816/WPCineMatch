@@ -15,8 +15,6 @@ import Signup from "./Signup";
 import "./styles/font.css";
 import Trending from "./Trending";
 import WatchLater from "./WatchLaterList";
-import { AuthProvider } from "./AuthContext";
-import ProtectedRoute from "./ProtectedRoute";
 import Chatbox from "./components/Chatbox";
 
 function App() {

@@ -12,6 +12,7 @@ import WatchLaterButton from "./components/WatchLaterButton";
 import { API_BASE_URL } from "./config";
 import Navbar from "./Navbar";
 import "./styles/home.js";
+import Chatbox from "./components/Chatbox";
 
 const MovieContainer = styled.div`
   position: relative;
