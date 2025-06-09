@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { fetchGenres, fetchMovieDetails, fetchMovies, fetchMovieTrailer, IMAGE_BASE_URL } from "./api";
+import {
+  fetchGenres,
+  fetchMovieDetails,
+  fetchMovies,
+  fetchMovieTrailer,
+  IMAGE_BASE_URL,
+} from "./api";
 import Navbar from "./Navbar";
 import HeartButton from "./components/HeartButton";
 import WatchLaterButton from "./components/WatchLaterButton";
@@ -22,7 +28,7 @@ const Trending = () => {
       const genreList = await fetchGenres();
       setGenres(genreList);
       applyFilters();
-      
+
       const userId = localStorage.getItem("userEmail");
       if (userId) {
         try {
@@ -150,19 +156,26 @@ const Trending = () => {
 
   const applyFilters = async () => {
     setLoading(true);
-    const allMovies = await fetchMovies("", selectedGenre, "", "popularity.desc");
-  
+    const allMovies = await fetchMovies(
+      "",
+      selectedGenre,
+      "",
+      "popularity.desc"
+    );
+
     const filtered = allMovies.filter((movie) => {
       const movieYear = movie.release_date?.split("-")[0];
       const matchesYear = releaseYear ? movieYear === releaseYear : true;
-      const matchesRating = minRating ? movie.vote_average >= parseFloat(minRating) : true;
+      const matchesRating = minRating
+        ? movie.vote_average >= parseFloat(minRating)
+        : true;
       return matchesYear && matchesRating;
     });
-  
+
     setMovies(filtered.slice(0, 10));
     setLoading(false);
   };
-  
+
   const showMovieDetails = async (movieId) => {
     const movie = await fetchMovieDetails(movieId);
     const trailer = await fetchMovieTrailer(movieId);
@@ -174,51 +187,75 @@ const Trending = () => {
     setSelectedMovie(null);
   };
 
+  <style>
+    {`
+  .landing-footer {
+    background-color: #111;
+    color: #aaa;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+`}
+  </style>;
+
   return (
-    <div style={{ backgroundColor: "#121212", minHeight: "100vh", color: "#fff" }}>
+    <div
+      style={{ backgroundColor: "#121212", minHeight: "100vh", color: "#fff" }}
+    >
       <Navbar />
 
-      <div style={{ textAlign: "center", paddingTop: "80px", paddingInline: "20px" }}>
+      <div
+        style={{
+          textAlign: "center",
+          paddingTop: "80px",
+          paddingInline: "20px",
+        }}
+      >
         <h2
-            style={{
-                color: "#ffffff",
-                fontWeight: "bold",
-                fontSize: "2.5rem",
-                textTransform: "uppercase",
-                letterSpacing: "1px",
-                position: "relative",
-                textShadow: "0 0 5px #e50914, 0 0 10px #ff0a16, 0 0 15px #ff4c4c",
-            }}
-            >
-            🔥 Top 10 Trending Movies
-            </h2>
+          style={{
+            color: "#ffffff",
+            fontWeight: "bold",
+            fontSize: "2.5rem",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            position: "relative",
+            textShadow: "0 0 5px #e50914, 0 0 10px #ff0a16, 0 0 15px #ff4c4c",
+          }}
+        >
+          🔥 Top 10 Trending Movies
+        </h2>
 
         {/* Filter bar - centered */}
-        <div style={{ 
-          display: "flex", 
-          flexWrap: "wrap", 
-          gap: "10px", 
-          marginBottom: "30px",
-          justifyContent: "center",
-          maxWidth: "800px",
-          margin: "0 auto 30px auto"
-        }}>
-          <select 
-            value={selectedGenre} 
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "10px",
+            marginBottom: "30px",
+            justifyContent: "center",
+            maxWidth: "800px",
+            margin: "0 auto 30px auto",
+          }}
+        >
+          <select
+            value={selectedGenre}
             onChange={(e) => setSelectedGenre(e.target.value)}
-            style={{ 
-              padding: "10px 15px", 
-              borderRadius: "20px", 
+            style={{
+              padding: "10px 15px",
+              borderRadius: "20px",
               border: "1px solid #333",
               backgroundColor: "#1e1e1e",
               color: "#fff",
               width: "180px",
-              outline: "none"
+              outline: "none",
             }}
           >
             <option value="">All Genres</option>
             {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>{genre.name}</option>
+              <option key={genre.id} value={genre.id}>
+                {genre.name}
+              </option>
             ))}
           </select>
 
@@ -227,14 +264,14 @@ const Trending = () => {
             placeholder="Release Year"
             value={releaseYear}
             onChange={(e) => setReleaseYear(e.target.value)}
-            style={{ 
-              padding: "10px 15px", 
-              borderRadius: "20px", 
+            style={{
+              padding: "10px 15px",
+              borderRadius: "20px",
               border: "1px solid #333",
               backgroundColor: "#1e1e1e",
               color: "#fff",
               width: "180px",
-              outline: "none"
+              outline: "none",
             }}
           />
 
@@ -246,28 +283,28 @@ const Trending = () => {
             max="10"
             value={minRating}
             onChange={(e) => setMinRating(e.target.value)}
-            style={{ 
-              padding: "10px 15px", 
-              borderRadius: "20px", 
+            style={{
+              padding: "10px 15px",
+              borderRadius: "20px",
               border: "1px solid #333",
               backgroundColor: "#1e1e1e",
               color: "#fff",
               width: "180px",
-              outline: "none"
+              outline: "none",
             }}
           />
 
-          <button 
-            onClick={applyFilters} 
-            style={{ 
-              padding: "10px 20px", 
-              backgroundColor: "#e50914", 
-              color: "#fff", 
-              border: "none", 
+          <button
+            onClick={applyFilters}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#e50914",
+              color: "#fff",
+              border: "none",
               borderRadius: "20px",
               fontWeight: "bold",
               cursor: "pointer",
-              width: "180px"
+              width: "180px",
             }}
           >
             Apply Filters
@@ -284,7 +321,7 @@ const Trending = () => {
               justifyContent: "center",
               gap: "20px",
               maxWidth: "1200px",
-              margin: "0 auto"
+              margin: "0 auto",
             }}
           >
             {movies.map((movie) => (
@@ -301,11 +338,15 @@ const Trending = () => {
                   width: "220px",
                   height: "480px",
                   display: "flex",
-                  flexDirection: "column"
+                  flexDirection: "column",
                 }}
                 onClick={() => showMovieDetails(movie.id)}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = "scale(1.03)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = "scale(1)")
+                }
               >
                 <img
                   src={`${IMAGE_BASE_URL}${movie.poster_path}`}
@@ -315,42 +356,50 @@ const Trending = () => {
                     height: "300px",
                     objectFit: "cover",
                     borderRadius: "8px",
-                    alignSelf: "center"
+                    alignSelf: "center",
                   }}
                 />
-                <h3 style={{ 
-                  color: "red",
-                  fontSize: "18px",
-                  marginTop: "10px",
-                  minHeight: "50px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  display: "-webkit-box",
-                  WebkitLineClamp: "2",
-                  WebkitBoxOrient: "vertical"
-                }}>
+                <h3
+                  style={{
+                    color: "red",
+                    fontSize: "18px",
+                    marginTop: "10px",
+                    minHeight: "50px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: "2",
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
                   {movie.title}
                 </h3>
-                <p style={{
-                  margin: "8px 0",
-                  fontSize: "16px"
-                }}>
+                <p
+                  style={{
+                    margin: "8px 0",
+                    fontSize: "16px",
+                  }}
+                >
                   {movie.release_date?.split("-")[0] || "N/A"} · ⭐{" "}
                   {movie.vote_average.toFixed(1)}
                 </p>
-                <p style={{ 
-                  fontSize: "14px",
-                  marginTop: "5px",
-                  marginBottom: "5px",
-                  flex: "1",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  display: "-webkit-box",
-                  WebkitLineClamp: "3",
-                  WebkitBoxOrient: "vertical"
-                }}>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    marginTop: "5px",
+                    marginBottom: "5px",
+                    flex: "1",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    display: "-webkit-box",
+                    WebkitLineClamp: "3",
+                    WebkitBoxOrient: "vertical",
+                  }}
+                >
                   {movie.genre_ids
-                    .map((id) => genres.find((g) => g.id === id)?.name || "Unknown")
+                    .map(
+                      (id) => genres.find((g) => g.id === id)?.name || "Unknown"
+                    )
                     .join(", ")}
                 </p>
               </div>
@@ -361,88 +410,167 @@ const Trending = () => {
 
       {/* Movie Details Modal - updated with buttons */}
       {selectedMovie && (
-        <div className="modal-overlay" onClick={closeModal} style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0,0,0,0.8)",
-          zIndex: 1000,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{
-            backgroundColor: "#181818",
-            borderRadius: "8px",
-            width: "80%",
-            maxWidth: "900px",
-            maxHeight: "90vh",
-            overflowY: "auto",
-            position: "relative"
-          }}>
-            <button className="close-button" onClick={closeModal} style={{
-              position: "absolute",
-              top: "15px",
-              right: "15px",
-              background: "none",
-              border: "none",
-              color: "white",
-              fontSize: "24px",
-              cursor: "pointer",
-              zIndex: 1001
-            }}>✖</button>
-            
+        <div
+          className="modal-overlay"
+          onClick={closeModal}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.8)",
+            zIndex: 1000,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#181818",
+              borderRadius: "8px",
+              width: "80%",
+              maxWidth: "900px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              position: "relative",
+            }}
+          >
+            <button
+              className="close-button"
+              onClick={closeModal}
+              style={{
+                position: "absolute",
+                top: "15px",
+                right: "15px",
+                background: "none",
+                border: "none",
+                color: "white",
+                fontSize: "24px",
+                cursor: "pointer",
+                zIndex: 1001,
+              }}
+            >
+              ✖
+            </button>
+
             <div className="modal-body" style={{ padding: "20px" }}>
-              <div className="poster-section" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div className="poster-wrapper">
-                  <img
-                    src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
-                    alt={selectedMovie.title}
-                    className="modal-poster"
-                    style={{ width: "300px", height: "400px", objectFit: "cover", borderRadius: "8px" }}
-                  />
-                </div>
-                <div className="top-buttons-wrapper" style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: "10px",
-                  marginTop: "10px",
-                  marginLeft: "-230px" 
-                }}>
-                  <HeartButton
-                    $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
-                    onClick={(e) => toggleFavourite(selectedMovie, e)}
-                    title={favouriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
-                    color={favouriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
-                  >
-                    {favouriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
-                  </HeartButton>
-                  <WatchLaterButton
+              <div
+                className="poster-section"
+                style={{ display: "flex", flexDirection: "row", gap: "20px" }}
+              >
+                <div
                   style={{
-                    position: "relative",
-                    top: "-14px",         
-                    left: "-15px"        
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
                   }}
-                    $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
-                    onClick={(e) => toggleWatchLater(selectedMovie, e)}
-                    title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
-                    color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
+                >
+                  <div className="poster-wrapper">
+                    <img
+                      src={
+                        selectedMovie.poster_path
+                          ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
+                          : "https://via.placeholder.com/300x400?text=No+Image"
+                      }
+                      alt={selectedMovie.title}
+                      className="modal-poster"
+                      style={{
+                        width: "300px",
+                        height: "400px",
+                        objectFit: "cover",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  </div>
+                  <div
+                    className="top-buttons-wrapper"
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      gap: "10px",
+                      marginTop: "10px",
+                      marginLeft: "-230px",
+                    }}
                   >
-                    {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
-                  </WatchLaterButton>
+                    <HeartButton
+                      $isAdded={favouriteMovieIds.includes(selectedMovie.id)}
+                      onClick={(e) => toggleFavourite(selectedMovie, e)}
+                      title={
+                        favouriteMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Favorites"
+                          : "Add to Favorites"
+                      }
+                      color={
+                        favouriteMovieIds.includes(selectedMovie.id)
+                          ? "red"
+                          : "white"
+                      }
+                    >
+                      {favouriteMovieIds.includes(selectedMovie.id)
+                        ? "❤️"
+                        : "🤍"}
+                    </HeartButton>
+                    <WatchLaterButton
+                      style={{
+                        position: "relative",
+                        top: "-14px",
+                        left: "-15px",
+                      }}
+                      $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
+                      onClick={(e) => toggleWatchLater(selectedMovie, e)}
+                      title={
+                        watchLaterMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Watch Later"
+                          : "Add to Watch Later"
+                      }
+                      color={
+                        watchLaterMovieIds.includes(selectedMovie.id)
+                          ? "yellow"
+                          : "white"
+                      }
+                    >
+                      {watchLaterMovieIds.includes(selectedMovie.id)
+                        ? "★"
+                        : "☆"}
+                    </WatchLaterButton>
+                  </div>
                 </div>
-              </div>                
                 <div className="modal-info" style={{ flex: 1 }}>
-                  <h2 style={{ color: "white", marginBottom: "15px" }}>{selectedMovie.title}</h2>
-                  <p style={{ color: "white", marginBottom: "15px" }}>{selectedMovie.overview}</p>
-                  
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", marginBottom: "20px" }}>
-                    <p style={{ color: "white" }}><strong>Release Date:</strong> {selectedMovie.release_date || 'N/A'}</p>
-                    <p style={{ color: "white" }}><strong>Rating:</strong> {selectedMovie.vote_average ? `${selectedMovie.vote_average}/10` : 'N/A'}</p>
-                    <p style={{ color: "white" }}><strong>Runtime:</strong> {selectedMovie.runtime ? `${selectedMovie.runtime} min` : 'N/A'}</p>
+                  <h2 style={{ color: "white", marginBottom: "15px" }}>
+                    {selectedMovie.title}
+                  </h2>
+                  <p style={{ color: "white", marginBottom: "15px" }}>
+                    {selectedMovie.overview}
+                  </p>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: "10px",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    <p style={{ color: "white" }}>
+                      <strong>Release Date:</strong>{" "}
+                      {selectedMovie.release_date || "N/A"}
+                    </p>
+                    <p style={{ color: "white" }}>
+                      <strong>Rating:</strong>{" "}
+                      {selectedMovie.vote_average
+                        ? `${selectedMovie.vote_average}/10`
+                        : "N/A"}
+                    </p>
+                    <p style={{ color: "white" }}>
+                      <strong>Runtime:</strong>{" "}
+                      {selectedMovie.runtime
+                        ? `${selectedMovie.runtime} min`
+                        : "N/A"}
+                    </p>
                     <p style={{ color: "white" }}>
                       <strong>Genres:</strong>{" "}
                       {selectedMovie.genres?.map((g) => g.name).join(", ")}
@@ -467,6 +595,9 @@ const Trending = () => {
           </div>
         </div>
       )}
+      <footer className="landing-footer">
+        <p>&copy; {new Date().getFullYear()} CineMatch. All rights reserved.</p>
+      </footer>
     </div>
   );
 };

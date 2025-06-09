@@ -1,18 +1,3 @@
-.login-bg {
-  background-image: url("/assets/assortment-cinema-elements-red-background-with-copy-space_23-2148457848.avif");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  min-height: 100vh; /* at least full screen height */
-  height: auto; /* grow if content grows */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem; /* avoid edges */
-  box-sizing: border-box;
-  flex-direction: column;
-  flex-wrap: wrap;
-}
 
 .login-box {
   /* height: 500px; */ /* REMOVE this fixed height */

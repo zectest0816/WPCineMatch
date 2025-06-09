@@ -10,9 +10,9 @@ import {
 } from "./api";
 import Navbar from "./Navbar";
 import "./styles/search.js";
-import HeartButton from './components/HeartButton';
-import WatchLaterButton from './components/WatchLaterButton';
-import { API_BASE_URL } from './config';
+import HeartButton from "./components/HeartButton";
+import WatchLaterButton from "./components/WatchLaterButton";
+import { API_BASE_URL } from "./config";
 
 const SearchContext = createContext();
 
@@ -50,7 +50,7 @@ const Search = () => {
   const [favoriteMovieIds, setFavoriteMovieIds] = useState([]);
   const [watchLaterMovieIds, setWatchLaterMovieIds] = useState([]);
   const [sortOption, setSortOption] = useState("");
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState([]);
   const userId = localStorage.getItem("userEmail");
 
@@ -61,7 +61,11 @@ const Search = () => {
         return;
       }
 
-      let results = await fetchMovies(query, selectedGenre || null, selectedYear || null);
+      let results = await fetchMovies(
+        query,
+        selectedGenre || null,
+        selectedYear || null
+      );
 
       // Apply sorting if needed
       switch (sortOption) {
@@ -72,10 +76,14 @@ const Search = () => {
           results.sort((a, b) => a.vote_average - b.vote_average);
           break;
         case "releaseDesc":
-          results.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+          results.sort(
+            (a, b) => new Date(b.release_date) - new Date(a.release_date)
+          );
           break;
         case "releaseAsc":
-          results.sort((a, b) => new Date(a.release_date) - new Date(b.release_date));
+          results.sort(
+            (a, b) => new Date(a.release_date) - new Date(b.release_date)
+          );
           break;
       }
 
@@ -88,7 +96,7 @@ const Search = () => {
   useEffect(() => {
     const loadGenres = async () => {
       try {
-        const genreList = await fetchGenres();  // your API helper to get genres
+        const genreList = await fetchGenres(); // your API helper to get genres
         setGenres(genreList);
       } catch (error) {
         console.error("Failed to load genres:", error);
@@ -116,7 +124,9 @@ const Search = () => {
 
     const fetchResults = async () => {
       // Your API call here
-      const response = await fetch(`https://api.example.com/search?query=${encodeURIComponent(query)}`);
+      const response = await fetch(
+        `https://api.example.com/search?query=${encodeURIComponent(query)}`
+      );
       const data = await response.json();
       setResults(data.results || []);
     };
@@ -185,9 +195,8 @@ const Search = () => {
   const handleDelete = async (id) => {
     await fetch(`http://localhost:3001/comments/${id}`, { method: "DELETE" });
     setActiveMenu(null);
-    fetchComments(selectedMovie.id); 
+    fetchComments(selectedMovie.id);
   };
-
 
   const closeModal = () => {
     setSelectedMovie(null);
@@ -201,13 +210,17 @@ const Search = () => {
         const email = localStorage.getItem("userEmail");
         if (!email) return;
 
-        const favResponse = await fetch(`${API_BASE_URL}/api/favourite/list/${email}`);
+        const favResponse = await fetch(
+          `${API_BASE_URL}/api/favourite/list/${email}`
+        );
         const favData = await favResponse.json();
-        setFavoriteMovieIds(favData.map(item => item.movieId));
+        setFavoriteMovieIds(favData.map((item) => item.movieId));
 
-        const wlResponse = await fetch(`${API_BASE_URL}/api/watchlater/list/${email}`);
+        const wlResponse = await fetch(
+          `${API_BASE_URL}/api/watchlater/list/${email}`
+        );
         const wlData = await wlResponse.json();
-        setWatchLaterMovieIds(wlData.map(item => item.movieId));
+        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
       } catch (error) {
         console.error("Error fetching user lists:", error);
       }
@@ -228,7 +241,7 @@ const Search = () => {
       const isAdded = favoriteMovieIds.includes(movie.id);
 
       if (!isAdded) {
-        setFavoriteMovieIds(prev => [...prev, movie.id]);
+        setFavoriteMovieIds((prev) => [...prev, movie.id]);
         await fetch(`${API_BASE_URL}/api/favourite/add`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -240,11 +253,14 @@ const Search = () => {
           }),
         });
       } else {
-        setFavoriteMovieIds(prev => prev.filter(id => id !== movie.id));
-        await fetch(`${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
+        setFavoriteMovieIds((prev) => prev.filter((id) => id !== movie.id));
+        await fetch(
+          `${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     } catch (error) {
       console.error("Favorite toggle error:", error);
@@ -264,7 +280,7 @@ const Search = () => {
       const isAdded = watchLaterMovieIds.includes(movie.id);
 
       if (!isAdded) {
-        setWatchLaterMovieIds(prev => [...prev, movie.id]);
+        setWatchLaterMovieIds((prev) => [...prev, movie.id]);
         await fetch(`${API_BASE_URL}/api/watchlater/add`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -276,11 +292,14 @@ const Search = () => {
           }),
         });
       } else {
-        setWatchLaterMovieIds(prev => prev.filter(id => id !== movie.id));
-        await fetch(`${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-        });
+        setWatchLaterMovieIds((prev) => prev.filter((id) => id !== movie.id));
+        await fetch(
+          `${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     } catch (error) {
       console.error("Watch Later toggle error:", error);
@@ -304,10 +323,15 @@ const Search = () => {
             alignItems: "center",
           }}
         >
-          <select value={selectedGenre} onChange={(e) => setSelectedGenre(e.target.value)}>
+          <select
+            value={selectedGenre}
+            onChange={(e) => setSelectedGenre(e.target.value)}
+          >
             <option value="">All Genres</option>
             {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>{genre.name}</option>
+              <option key={genre.id} value={genre.id}>
+                {genre.name}
+              </option>
             ))}
           </select>
 
@@ -319,8 +343,10 @@ const Search = () => {
             style={{ width: "100px" }}
           />
 
-
-          <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value)}
+          >
             <option value="">Sort By</option>
             <option value="ratingDesc">Rating: High to Low</option>
             <option value="ratingAsc">Rating: Low to High</option>
@@ -336,7 +362,7 @@ const Search = () => {
             padding: "1rem",
             display: "grid",
             gap: "1.5rem",
-            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 180px))", 
+            gridTemplateColumns: "repeat(auto-fill, minmax(180px, 180px))",
             justifyContent: "center",
           }}
         >
@@ -349,7 +375,11 @@ const Search = () => {
                 style={{ width: "180px", cursor: "pointer" }}
               >
                 <img
-                  src={movie.poster_path ? `${IMAGE_BASE_URL}${movie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
+                  src={
+                    movie.poster_path
+                      ? `${IMAGE_BASE_URL}${movie.poster_path}`
+                      : "https://via.placeholder.com/300x400?text=No+Image"
+                  }
                   alt={movie.title}
                   style={{
                     width: "180px",
@@ -358,7 +388,12 @@ const Search = () => {
                     borderRadius: "8px",
                   }}
                 />
-                <div className="movie-title" style={{ marginTop: "0.5rem", textAlign: "center" }}>{movie.title}</div>
+                <div
+                  className="movie-title"
+                  style={{ marginTop: "0.5rem", textAlign: "center" }}
+                >
+                  {movie.title}
+                </div>
               </div>
             ))
           ) : (
@@ -367,16 +402,21 @@ const Search = () => {
         </div>
       </div>
 
-
       {selectedMovie && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-button" onClick={closeModal}>✖</button>
+            <button className="close-button" onClick={closeModal}>
+              ✖
+            </button>
             <div className="modal-body">
               <div className="poster-section">
                 <div className="poster-wrapper">
                   <img
-                    src={selectedMovie.poster_path ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}` : "https://via.placeholder.com/300x400?text=No+Image"}
+                    src={
+                      selectedMovie.poster_path
+                        ? `${IMAGE_BASE_URL}${selectedMovie.poster_path}`
+                        : "https://via.placeholder.com/300x400?text=No+Image"
+                    }
                     alt={selectedMovie.title}
                     className="modal-poster"
                   />
@@ -384,18 +424,38 @@ const Search = () => {
                     <HeartButton
                       $isAdded={favoriteMovieIds.includes(selectedMovie.id)}
                       onClick={(e) => toggleFavorite(selectedMovie, e)}
-                      title={favoriteMovieIds.includes(selectedMovie.id) ? "Remove from Favorites" : "Add to Favorites"}
-                      color={favoriteMovieIds.includes(selectedMovie.id) ? "red" : "white"}
+                      title={
+                        favoriteMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Favorites"
+                          : "Add to Favorites"
+                      }
+                      color={
+                        favoriteMovieIds.includes(selectedMovie.id)
+                          ? "red"
+                          : "white"
+                      }
                     >
-                      {favoriteMovieIds.includes(selectedMovie.id) ? '❤️' : '🤍'}
+                      {favoriteMovieIds.includes(selectedMovie.id)
+                        ? "❤️"
+                        : "🤍"}
                     </HeartButton>
                     <WatchLaterButton
                       $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
                       onClick={(e) => toggleWatchLater(selectedMovie, e)}
-                      title={watchLaterMovieIds.includes(selectedMovie.id) ? "Remove from Watch Later" : "Add to Watch Later"}
-                      color={watchLaterMovieIds.includes(selectedMovie.id) ? "yellow" : "white"}
+                      title={
+                        watchLaterMovieIds.includes(selectedMovie.id)
+                          ? "Remove from Watch Later"
+                          : "Add to Watch Later"
+                      }
+                      color={
+                        watchLaterMovieIds.includes(selectedMovie.id)
+                          ? "yellow"
+                          : "white"
+                      }
                     >
-                      {watchLaterMovieIds.includes(selectedMovie.id) ? '★' : '☆'}
+                      {watchLaterMovieIds.includes(selectedMovie.id)
+                        ? "★"
+                        : "☆"}
                     </WatchLaterButton>
                   </div>
                 </div>
@@ -403,9 +463,22 @@ const Search = () => {
               <div className="modal-info">
                 <h2>{selectedMovie.title}</h2>
                 <p>{selectedMovie.overview}</p>
-                <p><strong>Release Date:</strong> {selectedMovie.release_date || 'N/A'}</p>
-                <p><strong>Runtime:</strong> {selectedMovie.runtime ? `${selectedMovie.runtime} min` : 'N/A'}</p>
-                <p><strong>Rating:</strong> {selectedMovie.vote_average ? `${selectedMovie.vote_average}/10` : 'N/A'}</p>
+                <p>
+                  <strong>Release Date:</strong>{" "}
+                  {selectedMovie.release_date || "N/A"}
+                </p>
+                <p>
+                  <strong>Runtime:</strong>{" "}
+                  {selectedMovie.runtime
+                    ? `${selectedMovie.runtime} min`
+                    : "N/A"}
+                </p>
+                <p>
+                  <strong>Rating:</strong>{" "}
+                  {selectedMovie.vote_average
+                    ? `${selectedMovie.vote_average}/10`
+                    : "N/A"}
+                </p>
 
                 {trailerUrl && (
                   <div className="trailer">
@@ -436,7 +509,9 @@ const Search = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <i
                           key={star}
-                          className={`bi bi-star${star <= rating ? "-fill" : ""}`}
+                          className={`bi bi-star${
+                            star <= rating ? "-fill" : ""
+                          }`}
                           style={{ cursor: "pointer", fontSize: "1.3rem" }}
                           onClick={() => setRating(star)}
                         ></i>
@@ -485,9 +560,16 @@ const Search = () => {
 
                           {/* Content */}
                           <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center mb-1" style={{ paddingRight: '20px' }}>
-                              <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
-                              <small style={{ color: 'white', fontSize: '0.75rem' }}>
+                            <div
+                              className="d-flex justify-content-between align-items-center mb-1"
+                              style={{ paddingRight: "20px" }}
+                            >
+                              <strong style={{ color: "#e5e5e5" }}>
+                                {comment.user}
+                              </strong>
+                              <small
+                                style={{ color: "white", fontSize: "0.75rem" }}
+                              >
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
                             </div>
@@ -504,8 +586,13 @@ const Search = () => {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <i
                                       key={star}
-                                      className={`bi bi-star${star <= editRating ? "-fill" : ""}`}
-                                      style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                                      className={`bi bi-star${
+                                        star <= editRating ? "-fill" : ""
+                                      }`}
+                                      style={{
+                                        cursor: "pointer",
+                                        fontSize: "1.3rem",
+                                      }}
                                       onClick={() => setEditRating(star)}
                                     ></i>
                                   ))}
@@ -532,15 +619,23 @@ const Search = () => {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <i
                                       key={star}
-                                      className={`bi bi-star${star <= comment.rating ? "-fill" : ""}`}
-                                      style={{ color: "#f5c518", marginRight: "2px" }}
+                                      className={`bi bi-star${
+                                        star <= comment.rating ? "-fill" : ""
+                                      }`}
+                                      style={{
+                                        color: "#f5c518",
+                                        marginRight: "2px",
+                                      }}
                                     ></i>
                                   ))}
                                 </div>
 
                                 {/* Comment text */}
-                                <p className="mb-0 text-light">{comment.text}</p>
-                              </>)}
+                                <p className="mb-0 text-light">
+                                  {comment.text}
+                                </p>
+                              </>
+                            )}
                           </div>
 
                           {/* Three-dot menu button - Only show if the comment belongs to current user */}
@@ -567,7 +662,9 @@ const Search = () => {
                                   <button
                                     className="dropdown-item text-white"
                                     style={{ backgroundColor: "#2c2c2c" }}
-                                    onClick={() => handleEditClick(comment._id, comment.text)}
+                                    onClick={() =>
+                                      handleEditClick(comment._id, comment.text)
+                                    }
                                   >
                                     Edit
                                   </button>
@@ -582,13 +679,13 @@ const Search = () => {
                               )}
                             </div>
                           )}
-
                         </div>
                       ))
                     ) : (
-                      <p className="text-muted">No comments yet. Be the first!</p>
+                      <p className="text-muted">
+                        No comments yet. Be the first!
+                      </p>
                     )}
-
                   </div>
                 </div>
               </div>
@@ -596,6 +693,10 @@ const Search = () => {
           </div>
         </div>
       )}
+      <footer className="landing-footer">
+        <p>&copy; {new Date().getFullYear()} CineMatch. All rights reserved.</p>
+        <div className="footer-links"></div>
+      </footer>
     </>
   );
 };
