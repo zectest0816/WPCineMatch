@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { debounce } from "lodash";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -13,14 +14,224 @@ import WatchLaterButton from "./components/WatchLaterButton";
 import { API_BASE_URL } from "./config";
 import Navbar from "./Navbar";
 
+const PageContainer = styled.div`
+  background-color: #121212;
+  min-height: 100vh;
+  color: #fff;
+  padding-bottom: 40px;
+`;
+
+const Title = styled.h2`
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 2.5rem;
+  text-transform: uppercase;
+  letterSpacing: 1px;
+  text-shadow: 0 0 5px #e50914, 0 0 10px #ff0a16, 0 0 15px #ff4c4c;
+  margin-bottom: 40px;
+  text-align: center;
+`;
+
+const FilterContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  max-width: 800px;
+  margin: 0 auto 24px auto;
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: center;
+  }
+`;
+
+const FilterSelect = styled.select`
+  padding: 12px 16px;
+  border-radius: 24px;
+  border: 1px solid #444;
+  background-color: #222;
+  color: #fff;
+  width: 160px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus {
+    border-color: #e50914;
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.3);
+  }
+`;
+
+const FilterInput = styled.input`
+  padding: 12px 16px;
+  border-radius: 24px;
+  border: 1px solid #444;
+  background-color: #222;
+  color: #fff;
+  width: 160px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus {
+    border-color: #e50914;
+    box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.3);
+  }
+`;
+
+const FilterButton = styled.button`
+  padding: 12px 24px;
+  background-color: #e50914;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 160px;
+  transition: background-color 0.2s, outline 0.2s;
+  &:hover {
+    background-color: #ff1a24;
+  }
+  &:focus {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+  }
+`;
+
+
 const MovieContainer = styled.div`
-  position: relative;
-  margin: 8px;
-  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  margin: 12px 0;
+  padding: 16px;
+  background: linear-gradient(145deg, #1e1e1e, #141414);
+  border: 1px solid #333;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
   cursor: pointer;
   &:hover {
-    transform: scale(1.03);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
   }
+`;
+
+const RankBadge = styled.div`
+  background-color: #e50914;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+  @media (max-width: 600px) {
+    width: 28px;
+    height: 28px;
+    font-size: 0.9rem;
+  }
+`;
+
+const MovieImage = styled.img`
+  width: 100px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-right: 16px;
+  @media (max-width: 600px) {
+    width: 80px;
+    height: 120px;
+  }
+`;
+
+const MovieInfo = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const MovieTitle = styled.h3`
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const MovieDetails = styled.p`
+  margin: 0;
+  font-size: 0.9rem;
+  color: #d1d1d1;
+`;
+
+const Revenue = styled.p`
+  margin: 0;
+  font-size: 0.9rem;
+  color: #4caf50;
+  font-weight: 500;
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+  position: relative;
+  .modal-header {
+    position: sticky;
+    top: 0;
+    background-color: #1a1a1a;
+    z-index: 10;
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  @media (max-width: 768px) {
+    width: 95%;
+    .modal-body {
+      flex-direction: column;
+    }
+    .modal-poster {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+`;
+
+const CommentList = styled.div`
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 16px;
+`;
+
+const CommentItem = styled.div`
+  display: flex;
+  margin-bottom: 16px;
+  padding: 16px;
+  background-color: #1f1f1f;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
 `;
 
 const Trending = () => {
@@ -45,7 +256,7 @@ const Trending = () => {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userEmail");
 
-  const fetchComments = async (movieId) => {
+  const fetchComments = useCallback(async (movieId) => {
     try {
       const response = await fetch(`${API_BASE_URL}/comments/${movieId}`);
       if (!response.ok) throw new Error("Failed to fetch comments");
@@ -56,20 +267,20 @@ const Trending = () => {
       setErrorMessage("Failed to load comments.");
       setTimeout(() => setErrorMessage(""), 3000);
     }
-  };
+  }, []);
 
-  const toggleMenu = (id) => {
+  const toggleMenu = useCallback((id) => {
     setActiveMenu(activeMenu === id ? null : id);
-  };
+  }, [activeMenu]);
 
-  const handleEditClick = (id, text, rating) => {
+  const handleEditClick = useCallback((id, text, rating) => {
     setEditingCommentId(id);
     setEditText(text);
     setEditRating(rating);
     setActiveMenu(null);
-  };
+  }, []);
 
-  const handleEditSave = async (id) => {
+  const handleEditSave = useCallback(async (id) => {
     try {
       const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
         method: "PATCH",
@@ -84,9 +295,9 @@ const Trending = () => {
       setErrorMessage("Failed to edit comment.");
       setTimeout(() => setErrorMessage(""), 3000);
     }
-  };
+  }, [editText, editRating, selectedMovie, fetchComments]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     try {
       const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
         method: "DELETE",
@@ -99,9 +310,9 @@ const Trending = () => {
       setErrorMessage("Failed to delete comment.");
       setTimeout(() => setErrorMessage(""), 3000);
     }
-  };
+  }, [selectedMovie, fetchComments]);
 
-  const toggleFavourite = async (movie, event) => {
+  const toggleFavourite = useCallback(async (movie, event) => {
     event.stopPropagation();
     if (!userId) {
       navigate("/login");
@@ -149,9 +360,9 @@ const Trending = () => {
       setErrorMessage("Failed to update favorites.");
       setTimeout(() => setErrorMessage(""), 3000);
     }
-  };
+  }, [favouriteMovieIds, userId, navigate]);
 
-  const toggleWatchLater = async (movie, event) => {
+  const toggleWatchLater = useCallback(async (movie, event) => {
     event.stopPropagation();
     if (!userId) {
       navigate("/login");
@@ -199,17 +410,17 @@ const Trending = () => {
       setErrorMessage("Failed to update watch later list.");
       setTimeout(() => setErrorMessage(""), 3000);
     }
-  };
+  }, [watchLaterMovieIds, userId, navigate]);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentText || rating === 0) {
       setErrorMessage("Please enter a comment and select a rating.");
       setTimeout(() => setErrorMessage(""), 3000);
-      return;
     }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/comments`, {
+      await fetch(`http://localhost:3001/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -219,53 +430,16 @@ const Trending = () => {
           rating,
         }),
       });
-      if (!response.ok) throw new Error("Failed to submit comment");
+
       setCommentText("");
       setRating(0);
       fetchComments(selectedMovie.id);
     } catch (error) {
       console.error("Failed to submit comment:", error);
-      setErrorMessage("Failed to submit comment.");
-      setTimeout(() => setErrorMessage(""), 3000);
     }
   };
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      setLoading(true);
-      const genreList = await fetchGenres();
-      setGenres(genreList);
-      await applyFilters();
-      setLoading(false);
-    };
-    loadInitialData();
-  }, []);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!userId) return;
-      try {
-        const favResponse = await fetch(
-          `${API_BASE_URL}/api/favourite/list/${userId}`
-        );
-        const favData = await favResponse.json();
-        setFavouriteIds(favData.map((item) => item.movieId));
-
-        const wlResponse = await fetch(
-          `${API_BASE_URL}/api/watchlater/list/${userId}`
-        );
-        const wlData = await wlResponse.json();
-        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
-      } catch (error) {
-        console.error("Fetch error:", error);
-        setErrorMessage("Failed to load user data.");
-        setTimeout(() => setErrorMessage(""), 3000);
-      }
-    };
-    fetchUserData();
-  }, []);
-
-  const applyFilters = async () => {
+  const applyFilters = useCallback(async () => {
     setLoading(true);
     try {
       const allMovies = await fetchMovies("", selectedGenre, "", "revenue.desc");
@@ -293,7 +467,48 @@ const Trending = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedGenre, releaseYear, minRating]);
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setLoading(true);
+      const genreList = await fetchGenres();
+      setGenres(genreList);
+      await applyFilters();
+      setLoading(false);
+    };
+    loadInitialData();
+  }, [applyFilters]);
+
+  useEffect(() => {
+    const debouncedApplyFilters = debounce(applyFilters, 500);
+    debouncedApplyFilters();
+    return () => debouncedApplyFilters.cancel();
+  }, [selectedGenre, releaseYear, minRating, applyFilters]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!userId) return;
+      try {
+        const favResponse = await fetch(
+          `${API_BASE_URL}/api/favourite/list/${userId}`
+        );
+        const favData = await favResponse.json();
+        setFavouriteIds(favData.map((item) => item.movieId));
+
+        const wlResponse = await fetch(
+          `${API_BASE_URL}/api/watchlater/list/${userId}`
+        );
+        const wlData = await wlResponse.json();
+        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
+      } catch (error) {
+        console.error("Fetch error:", error);
+        setErrorMessage("Failed to load user data.");
+        setTimeout(() => setErrorMessage(""), 3000);
+      }
+    };
+    fetchUserData();
+  }, [userId]);
 
   const formatRevenue = (revenue) => {
     if (!revenue) return "N/A";
@@ -304,7 +519,7 @@ const Trending = () => {
     return `$${revenue}`;
   };
 
-  const showMovieDetails = async (movieId) => {
+  const showMovieDetails = useCallback(async (movieId) => {
     try {
       const movie = await fetchMovieDetails(movieId);
       const trailer = await fetchMovieTrailer(movieId);
@@ -316,10 +531,14 @@ const Trending = () => {
       setErrorMessage("Failed to load movie details.");
       setTimeout(() => setErrorMessage(""), 3000);
     }
-  };
+  }, [fetchComments]);
+
+  const averageRating = comments.length
+    ? (comments.reduce((sum, c) => sum + c.rating, 0) / comments.length).toFixed(1)
+    : "N/A";
 
   return (
-    <div style={{ backgroundColor: "#121212", minHeight: "100vh", color: "#fff" }}>
+    <PageContainer>
       <Navbar className="navbar navbar-dark bg-black border-bottom border-secondary px-3">
         <a className="navbar-brand fw-bold fs-3 text-danger" href="#">
           🎬 MovieExplorer
@@ -327,49 +546,20 @@ const Trending = () => {
         <button
           className="btn btn-outline-light ms-auto"
           onClick={() => navigate("/search")}
+          aria-label="Search movies"
         >
           🔍 Search
         </button>
       </Navbar>
 
-      <div style={{ textAlign: "center", paddingTop: "80px", paddingInline: "20px" }}>
-        <h2
-          style={{
-            color: "#ffffff",
-            fontWeight: "bold",
-            fontSize: "2.5rem",
-            textTransform: "uppercase",
-            letterSpacing: "1px",
-            position: "relative",
-            textShadow: "0 0 5px #e50914, 0 0 10px #ff0a16, 0 0 15px #ff4c4c",
-          }}
-        >
-          🔥 Top 10 Trending Movies
-        </h2>
+      <div style={{ paddingTop: "80px", paddingInline: "20px" }}>
+        <Title>🔥 Top 10 Trending Movies</Title>
 
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "10px",
-            marginBottom: "30px",
-            justifyContent: "center",
-            maxWidth: "800px",
-            margin: "0 auto 30px auto",
-          }}
-        >
-          <select
+        <FilterContainer>
+          <FilterSelect
             value={selectedGenre}
             onChange={(e) => setSelectedGenre(e.target.value)}
-            style={{
-              padding: "10px 15px",
-              borderRadius: "20px",
-              border: "1px solid #333",
-              backgroundColor: "#1e1e1e",
-              color: "#fff",
-              width: "180px",
-              outline: "none",
-            }}
+            aria-label="Select genre"
           >
             <option value="">All Genres</option>
             {genres.map((genre) => (
@@ -377,25 +567,17 @@ const Trending = () => {
                 {genre.name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
 
-          <input
+          <FilterInput
             type="number"
             placeholder="Release Year"
             value={releaseYear}
             onChange={(e) => setReleaseYear(e.target.value)}
-            style={{
-              padding: "10px 15px",
-              borderRadius: "20px",
-              border: "1px solid #333",
-              backgroundColor: "#1e1e1e",
-              color: "#fff",
-              width: "180px",
-              outline: "none",
-            }}
+            aria-label="Enter release year"
           />
 
-          <input
+          <FilterInput
             type="number"
             placeholder="Min Rating"
             step="0.1"
@@ -403,89 +585,58 @@ const Trending = () => {
             max="10"
             value={minRating}
             onChange={(e) => setMinRating(e.target.value)}
-            style={{
-              padding: "10px 15px",
-              borderRadius: "20px",
-              border: "1px solid #333",
-              backgroundColor: "#1e1e1e",
-              color: "#fff",
-              width: "180px",
-              outline: "none",
-            }}
+            aria-label="Enter minimum rating"
           />
 
-          <button
-            onClick={applyFilters}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#e50914",
-              color: "#fff",
-              border: "none",
-              borderRadius: "20px",
-              fontWeight: "bold",
-              cursor: "pointer",
-              width: "180px",
-            }}
-          >
+          <FilterButton onClick={applyFilters} aria-label="Apply movie filters">
             Apply Filters
-          </button>
-        </div>
+          </FilterButton>
+        </FilterContainer>
 
         {loading ? (
-          <p>Loading movies...</p>
+          <div style={{ textAlign: "center", padding: "20px" }}>
+            <div className="spinner-border text-danger" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
         ) : (
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(5, 1fr)",
-              gridTemplateRows: "repeat(2, auto)",
-              gap: "15px",
-              maxWidth: "1200px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              maxWidth: "800px",
               margin: "0 auto",
               padding: "0 10px",
             }}
           >
-            {movies.map((movie) => (
-              <MovieContainer key={movie.id} onClick={() => showMovieDetails(movie.id)}>
-                <img
-                  className="movie-thumbnail"
+            {movies.map((movie, index) => (
+              <MovieContainer
+                key={movie.id}
+                onClick={() => showMovieDetails(movie.id)}
+                role="button"
+                tabIndex={0}
+                onKeyPress={(e) => e.key === "Enter" && showMovieDetails(movie.id)}
+                aria-label={`View details for ${movie.title}, ranked ${index + 1}`}
+              >
+                <RankBadge aria-hidden="true">{index + 1}</RankBadge>
+                <MovieImage
                   src={
                     movie.poster_path
                       ? `${IMAGE_BASE_URL}${movie.poster_path}`
-                      : "https://via.placeholder.com/150x225?text=No+Image"
+                      : "https://via.placeholder.com/100x150?text=No+Image"
                   }
                   alt={movie.title}
-                  style={{
-                    width: "200px",
-                    height: "300px",
-                    objectFit: "cover",
-                    borderRadius: "8px",
-                  }}
+                  loading="lazy"
                 />
-                <div style={{ textAlign: "center", padding: "10px" }}>
-                  <h3
-                    style={{
-                      color: "red",
-                      fontSize: "16px",
-                      marginTop: "10px",
-                      minHeight: "50px",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: "2",
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {movie.title}
-                  </h3>
-                  <p style={{ margin: "8px 0", fontSize: "14px" }}>
+                <MovieInfo>
+                  <MovieTitle>{movie.title}</MovieTitle>
+                  <MovieDetails>
                     {movie.release_date?.split("-")[0] || "N/A"} · ⭐{" "}
                     {movie.vote_average?.toFixed(1) || "N/A"}
-                  </p>
-                  <p style={{ margin: "5px 0", fontSize: "14px", color: "#4caf50" }}>
-                    💰 {formatRevenue(movie.revenue)}
-                  </p>
-                </div>
+                  </MovieDetails>
+                  <Revenue>💰 {formatRevenue(movie.revenue)}</Revenue>
+                </MovieInfo>
               </MovieContainer>
             ))}
           </div>
@@ -493,8 +644,7 @@ const Trending = () => {
       </div>
 
       {selectedMovie && (
-        <div
-          className="modal-overlay"
+        <ModalOverlay
           onClick={() => {
             setSelectedMovie(null);
             setTrailerKey("");
@@ -502,17 +652,33 @@ const Trending = () => {
           role="dialog"
           aria-labelledby="modal-title"
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="close-button"
-              onClick={() => {
-                setSelectedMovie(null);
-                setTrailerKey("");
-              }}
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 id="modal-title" style={{ fontSize: "2rem", margin: 0 }}>
+                {selectedMovie.title}
+              </h2>
+              <button
+                className="close-button"
+                onClick={() => {
+                  setSelectedMovie(null);
+                  setTrailerKey("");
+                }}
+                aria-label="Close modal"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                }}
+              >
+                ✖
+              </button>
+            </div>
+            <div
+              className="modal-body"
+              style={{ display: "flex", gap: "20px", padding: "20px" }}
             >
-              ✖
-            </button>
-            <div className="modal-body">
               <div className="poster-section">
                 <div className="poster-wrapper">
                   <img
@@ -523,7 +689,6 @@ const Trending = () => {
                     }
                     alt={selectedMovie.title}
                     className="modal-poster"
-                    style={{ maxWidth: "300px", borderRadius: "8px" }}
                   />
                   <div className="top-buttons-wrapper">
                     <HeartButton
@@ -535,7 +700,9 @@ const Trending = () => {
                           : "Add to Favorites"
                       }
                     >
-                      {favouriteMovieIds.includes(selectedMovie.id) ? "❤️" : "🤍"}
+                      {favouriteMovieIds.includes(selectedMovie.id)
+                        ? "❤️"
+                        : "🤍"}
                     </HeartButton>
                     <WatchLaterButton
                       $isAdded={watchLaterMovieIds.includes(selectedMovie.id)}
@@ -547,15 +714,21 @@ const Trending = () => {
                       }
                       style={{ marginTop: "8px" }}
                     >
-                      {watchLaterMovieIds.includes(selectedMovie.id) ? "★" : "☆"}
+                      {watchLaterMovieIds.includes(selectedMovie.id)
+                        ? "★"
+                        : "☆"}
                     </WatchLaterButton>
                   </div>
                 </div>
               </div>
-              <div className="modal-info">
-                <h2 id="modal-title">{selectedMovie.title}</h2>
-                <p>{selectedMovie.overview}</p>
-                <div className="movie-details-grid">
+              <div className="modal-info" style={{ flex: 1 }}>
+                <p style={{ color: "#d1d1d1", marginBottom: "16px" }}>
+                  {selectedMovie.overview}
+                </p>
+                <div
+                  className="movie-details-grid"
+                  style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}
+                >
                   <p>
                     <strong>Release Date:</strong> {selectedMovie.release_date || "N/A"}
                   </p>
@@ -572,20 +745,29 @@ const Trending = () => {
                   <p>
                     <strong>Revenue:</strong> {formatRevenue(selectedMovie.revenue)}
                   </p>
+                  <p>
+                    <strong>Average User Rating:</strong> {averageRating}/5
+                  </p>
                 </div>
                 {trailerKey ? (
-                  <div className="trailer">
+                  <div className="trailer" style={{ marginTop: "20px" }}>
                     <iframe
                       width="100%"
                       height="300"
                       src={`https://www.youtube.com/embed/${trailerKey}`}
                       frameBorder="0"
                       allowFullScreen
-                      title="Trailer"
+                      title="Movie Trailer"
                     ></iframe>
                   </div>
                 ) : (
-                  <p>No trailer available.</p>
+                  <div style={{ marginTop: "20px", textAlign: "center" }}>
+                    <img
+                      src="https://via.placeholder.com/300x200?text=No+Trailer+Available"
+                      alt="No trailer available"
+                      style={{ maxWidth: "100%", borderRadius: "8px" }}
+                    />
+                  </div>
                 )}
                 <div className="comment-section mt-4">
                   <h4 className="text-light mb-3">Comments</h4>
@@ -599,6 +781,7 @@ const Trending = () => {
                         {errorMessage}
                       </div>
                     )}
+
                     <div className="mb-2 text-warning">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <i
@@ -637,6 +820,7 @@ const Trending = () => {
                             boxShadow: "0 2px 4px rgba(0,0,0,0.5)",
                           }}
                         >
+                          {/* Avatar */}
                           <div
                             className="flex-shrink-0 bg-danger text-white rounded-circle d-flex align-items-center justify-content-center me-3"
                             style={{
@@ -648,16 +832,16 @@ const Trending = () => {
                           >
                             {comment.user.charAt(0).toUpperCase()}
                           </div>
+
+                          {/* Content */}
                           <div className="flex-grow-1">
-                            <div
-                              className="d-flex justify-content-between align-items-center mb-1"
-                              style={{ paddingRight: "20px" }}
-                            >
+                            <div className="d-flex justify-content-between align-items-center mb-1" style={{ paddingRight: '20px' }}>
                               <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
-                              <small style={{ color: "white", fontSize: "0.75rem" }}>
+                              <small style={{ color: 'white', fontSize: '0.75rem' }}>
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
                             </div>
+                            {/* Edit mode or display mode */}
                             {editingCommentId === comment._id ? (
                               <>
                                 <input
@@ -692,6 +876,7 @@ const Trending = () => {
                               </>
                             ) : (
                               <>
+                                {/* Rating stars */}
                                 <div className="d-flex align-items-center mb-1">
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <i
@@ -701,18 +886,22 @@ const Trending = () => {
                                     ></i>
                                   ))}
                                 </div>
+
+                                {/* Comment text */}
                                 <p className="mb-0 text-light">{comment.text}</p>
                               </>
                             )}
                           </div>
-                          {userId && comment.user === userId && (
+
+                          {/* Three-dot menu button - Only show if the comment belongs to current user */}
+                          {comment.user === userId && (
                             <div className="position-absolute top-0 end-0 p-2">
                               <button
                                 className="btn btn-sm text-white"
                                 onClick={() => toggleMenu(comment._id)}
                                 style={{ background: "none", border: "none" }}
                               >
-                                ⋮
+                                &#8942;
                               </button>
                               {activeMenu === comment._id && (
                                 <div
@@ -728,9 +917,7 @@ const Trending = () => {
                                   <button
                                     className="dropdown-item text-white"
                                     style={{ backgroundColor: "#2c2c2c" }}
-                                    onClick={() =>
-                                      handleEditClick(comment._id, comment.text, comment.rating)
-                                    }
+                                    onClick={() => handleEditClick(comment._id, comment.text)}
                                   >
                                     Edit
                                   </button>
@@ -745,19 +932,21 @@ const Trending = () => {
                               )}
                             </div>
                           )}
+
                         </div>
                       ))
                     ) : (
                       <p className="text-muted">No comments yet. Be the first!</p>
                     )}
+
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          </ModalContent>
+        </ModalOverlay>
       )}
-    </div>
+    </PageContainer>
   );
 };
 
