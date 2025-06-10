@@ -12,7 +12,7 @@ import WatchLaterButton from "./components/WatchLaterButton";
 import { API_BASE_URL } from "./config";
 import Navbar from "./Navbar";
 import "./styles/home.js";
-
+import Chatbox from "./components/Chatbox";
 
 const MovieContainer = styled.div`
   position: relative;
@@ -147,11 +147,11 @@ const Home = () => {
         body: isAdded
           ? null
           : JSON.stringify({
-            userId,
-            movieId: movie.id,
-            title: movie.title,
-            poster_path: movie.poster_path,
-          }),
+              userId,
+              movieId: movie.id,
+              title: movie.title,
+              poster_path: movie.poster_path,
+            }),
       });
 
       if (!response.ok) {
@@ -198,11 +198,11 @@ const Home = () => {
         body: isAdded
           ? null
           : JSON.stringify({
-            userId,
-            movieId: movie.id,
-            title: movie.title,
-            poster_path: movie.poster_path,
-          }),
+              userId,
+              movieId: movie.id,
+              title: movie.title,
+              poster_path: movie.poster_path,
+            }),
       });
 
       if (!response.ok) {
@@ -473,7 +473,9 @@ const Home = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <i
                           key={star}
-                          className={`bi bi-star${star <= rating ? "-fill" : ""}`}
+                          className={`bi bi-star${
+                            star <= rating ? "-fill" : ""
+                          }`}
                           style={{ cursor: "pointer", fontSize: "1.3rem" }}
                           onClick={() => setRating(star)}
                         ></i>
@@ -522,9 +524,16 @@ const Home = () => {
 
                           {/* Content */}
                           <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center mb-1" style={{ paddingRight: '20px' }}>
-                              <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
-                              <small style={{ color: 'white', fontSize: '0.75rem' }}>
+                            <div
+                              className="d-flex justify-content-between align-items-center mb-1"
+                              style={{ paddingRight: "20px" }}
+                            >
+                              <strong style={{ color: "#e5e5e5" }}>
+                                {comment.user}
+                              </strong>
+                              <small
+                                style={{ color: "white", fontSize: "0.75rem" }}
+                              >
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
                             </div>
@@ -540,8 +549,13 @@ const Home = () => {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <i
                                       key={star}
-                                      className={`bi bi-star${star <= editRating ? "-fill" : ""}`}
-                                      style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                                      className={`bi bi-star${
+                                        star <= editRating ? "-fill" : ""
+                                      }`}
+                                      style={{
+                                        cursor: "pointer",
+                                        fontSize: "1.3rem",
+                                      }}
                                       onClick={() => setEditRating(star)}
                                     ></i>
                                   ))}
@@ -568,14 +582,21 @@ const Home = () => {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <i
                                       key={star}
-                                      className={`bi bi-star${star <= comment.rating ? "-fill" : ""}`}
-                                      style={{ color: "#f5c518", marginRight: "2px" }}
+                                      className={`bi bi-star${
+                                        star <= comment.rating ? "-fill" : ""
+                                      }`}
+                                      style={{
+                                        color: "#f5c518",
+                                        marginRight: "2px",
+                                      }}
                                     ></i>
                                   ))}
                                 </div>
 
                                 {/* Comment text */}
-                                <p className="mb-0 text-light">{comment.text}</p>
+                                <p className="mb-0 text-light">
+                                  {comment.text}
+                                </p>
                               </>
                             )}
                           </div>
@@ -604,7 +625,9 @@ const Home = () => {
                                   <button
                                     className="dropdown-item text-white"
                                     style={{ backgroundColor: "#2c2c2c" }}
-                                    onClick={() => handleEditClick(comment._id, comment.text)}
+                                    onClick={() =>
+                                      handleEditClick(comment._id, comment.text)
+                                    }
                                   >
                                     Edit
                                   </button>
@@ -619,13 +642,13 @@ const Home = () => {
                               )}
                             </div>
                           )}
-
                         </div>
                       ))
                     ) : (
-                      <p className="text-muted">No comments yet. Be the first!</p>
+                      <p className="text-muted">
+                        No comments yet. Be the first!
+                      </p>
                     )}
-
                   </div>
                 </div>
               </div>
@@ -633,6 +656,10 @@ const Home = () => {
           </div>
         </div>
       )}
+      <Chatbox />
+      <footer className="landing-footer">
+        <p>&copy; {new Date().getFullYear()} CineMatch. All rights reserved.</p>
+      </footer>
     </>
   );
 };

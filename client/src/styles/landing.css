@@ -156,21 +156,3 @@ body {
   text-align: center;
   padding: 2rem 1rem;
 }
-
-.footer-links {
-  margin-top: 1rem;
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.footer-links a {
-  color: #aaa;
-  text-decoration: none;
-  font-size: 0.95rem;
-}
-
-.footer-links a:hover {
-  color: #fff;
-}

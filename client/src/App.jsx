@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 
 import { AuthProvider } from "./AuthContext";
 import Bookmark from "./Bookmark";
@@ -15,13 +15,14 @@ import Signup from "./Signup";
 import "./styles/font.css";
 import Trending from "./Trending";
 import WatchLater from "./WatchLaterList";
+import Chatbox from "./components/Chatbox";
 
 function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <>
+      <AuthProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/register" element={<Signup />} />
@@ -83,8 +84,8 @@ function App() {
             }
           />
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </>
   );
 }
 

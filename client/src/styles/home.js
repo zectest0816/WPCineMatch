@@ -345,6 +345,14 @@ display: inline-block;
     color: #fff;
     font-weight: bold;
   }
+
+  /* Footer */
+.landing-footer {
+  background-color: #111;
+  color: #aaa;
+  text-align: center;
+  padding: 2rem 1rem;
+}
     
 `;
 

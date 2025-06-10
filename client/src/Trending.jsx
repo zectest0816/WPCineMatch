@@ -26,7 +26,7 @@ const Title = styled.h2`
   font-weight: bold;
   font-size: 2.5rem;
   text-transform: uppercase;
-  letterSpacing: 1px;
+  letterspacing: 1px;
   text-shadow: 0 0 5px #e50914, 0 0 10px #ff0a16, 0 0 15px #ff4c4c;
   margin-bottom: 40px;
   text-align: center;
@@ -93,7 +93,6 @@ const FilterButton = styled.button`
     outline-offset: 2px;
   }
 `;
-
 
 const MovieContainer = styled.div`
   display: flex;
@@ -269,9 +268,12 @@ const Trending = () => {
     }
   }, []);
 
-  const toggleMenu = useCallback((id) => {
-    setActiveMenu(activeMenu === id ? null : id);
-  }, [activeMenu]);
+  const toggleMenu = useCallback(
+    (id) => {
+      setActiveMenu(activeMenu === id ? null : id);
+    },
+    [activeMenu]
+  );
 
   const handleEditClick = useCallback((id, text, rating) => {
     setEditingCommentId(id);
@@ -280,137 +282,151 @@ const Trending = () => {
     setActiveMenu(null);
   }, []);
 
-  const handleEditSave = useCallback(async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: editText, rating: editRating }),
-      });
-      if (!response.ok) throw new Error("Failed to update comment");
-      setEditingCommentId(null);
-      fetchComments(selectedMovie.id);
-    } catch (error) {
-      console.error("Failed to edit comment:", error);
-      setErrorMessage("Failed to edit comment.");
-      setTimeout(() => setErrorMessage(""), 3000);
-    }
-  }, [editText, editRating, selectedMovie, fetchComments]);
-
-  const handleDelete = useCallback(async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete comment");
-      setActiveMenu(null);
-      fetchComments(selectedMovie.id);
-    } catch (error) {
-      console.error("Failed to delete comment:", error);
-      setErrorMessage("Failed to delete comment.");
-      setTimeout(() => setErrorMessage(""), 3000);
-    }
-  }, [selectedMovie, fetchComments]);
-
-  const toggleFavourite = useCallback(async (movie, event) => {
-    event.stopPropagation();
-    if (!userId) {
-      navigate("/login");
-      return;
-    }
-    try {
-      const isAdded = favouriteMovieIds.includes(movie.id);
-      let updatedIds;
-
-      if (isAdded) {
-        updatedIds = favouriteMovieIds.filter((id) => id !== movie.id);
-        setFavouriteIds(updatedIds);
-      } else {
-        updatedIds = [...favouriteMovieIds, movie.id];
-        setFavouriteIds(updatedIds);
+  const handleEditSave = useCallback(
+    async (id) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: editText, rating: editRating }),
+        });
+        if (!response.ok) throw new Error("Failed to update comment");
+        setEditingCommentId(null);
+        fetchComments(selectedMovie.id);
+      } catch (error) {
+        console.error("Failed to edit comment:", error);
+        setErrorMessage("Failed to edit comment.");
+        setTimeout(() => setErrorMessage(""), 3000);
       }
+    },
+    [editText, editRating, selectedMovie, fetchComments]
+  );
 
-      const endpoint = isAdded
-        ? `${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`
-        : `${API_BASE_URL}/api/favourite/add`;
-
-      const response = await fetch(endpoint, {
-        method: isAdded ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: isAdded
-          ? null
-          : JSON.stringify({
-              userId,
-              movieId: movie.id,
-              title: movie.title,
-              poster_path: movie.poster_path,
-            }),
-      });
-
-      if (!response.ok) {
-        const favResponse = await fetch(
-          `${API_BASE_URL}/api/favourite/list/${userId}`
-        );
-        const favData = await favResponse.json();
-        setFavouriteIds(favData.map((item) => item.movieId));
-        throw new Error(`Failed to ${isAdded ? "remove" : "add"} favorite`);
+  const handleDelete = useCallback(
+    async (id) => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/comments/${id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) throw new Error("Failed to delete comment");
+        setActiveMenu(null);
+        fetchComments(selectedMovie.id);
+      } catch (error) {
+        console.error("Failed to delete comment:", error);
+        setErrorMessage("Failed to delete comment.");
+        setTimeout(() => setErrorMessage(""), 3000);
       }
-    } catch (err) {
-      console.error("Favourite toggle error:", err);
-      setErrorMessage("Failed to update favorites.");
-      setTimeout(() => setErrorMessage(""), 3000);
-    }
-  }, [favouriteMovieIds, userId, navigate]);
+    },
+    [selectedMovie, fetchComments]
+  );
 
-  const toggleWatchLater = useCallback(async (movie, event) => {
-    event.stopPropagation();
-    if (!userId) {
-      navigate("/login");
-      return;
-    }
-    try {
-      const isAdded = watchLaterMovieIds.includes(movie.id);
-      let updatedIds;
-
-      if (isAdded) {
-        updatedIds = watchLaterMovieIds.filter((id) => id !== movie.id);
-        setWatchLaterMovieIds(updatedIds);
-      } else {
-        updatedIds = [...watchLaterMovieIds, movie.id];
-        setWatchLaterMovieIds(updatedIds);
+  const toggleFavourite = useCallback(
+    async (movie, event) => {
+      event.stopPropagation();
+      if (!userId) {
+        navigate("/login");
+        return;
       }
+      try {
+        const isAdded = favouriteMovieIds.includes(movie.id);
+        let updatedIds;
 
-      const endpoint = isAdded
-        ? `${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`
-        : `${API_BASE_URL}/api/watchlater/add`;
+        if (isAdded) {
+          updatedIds = favouriteMovieIds.filter((id) => id !== movie.id);
+          setFavouriteIds(updatedIds);
+        } else {
+          updatedIds = [...favouriteMovieIds, movie.id];
+          setFavouriteIds(updatedIds);
+        }
 
-      const response = await fetch(endpoint, {
-        method: isAdded ? "DELETE" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: isAdded
-          ? null
-          : JSON.stringify({
-              userId,
-              movieId: movie.id,
-              title: movie.title,
-              poster_path: movie.poster_path,
-            }),
-      });
+        const endpoint = isAdded
+          ? `${API_BASE_URL}/api/favourite/${movie.id}?userId=${userId}`
+          : `${API_BASE_URL}/api/favourite/add`;
 
-      if (!response.ok) {
-        const wlResponse = await fetch(
-          `${API_BASE_URL}/api/watchlater/list/${userId}`
-        );
-        const wlData = await wlResponse.json();
-        setWatchLaterMovieIds(wlData.map((item) => item.movieId));
-        throw new Error(`Failed to ${isAdded ? "remove" : "add"} watch later`);
+        const response = await fetch(endpoint, {
+          method: isAdded ? "DELETE" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: isAdded
+            ? null
+            : JSON.stringify({
+                userId,
+                movieId: movie.id,
+                title: movie.title,
+                poster_path: movie.poster_path,
+              }),
+        });
+
+        if (!response.ok) {
+          const favResponse = await fetch(
+            `${API_BASE_URL}/api/favourite/list/${userId}`
+          );
+          const favData = await favResponse.json();
+          setFavouriteIds(favData.map((item) => item.movieId));
+          throw new Error(`Failed to ${isAdded ? "remove" : "add"} favorite`);
+        }
+      } catch (err) {
+        console.error("Favourite toggle error:", err);
+        setErrorMessage("Failed to update favorites.");
+        setTimeout(() => setErrorMessage(""), 3000);
       }
-    } catch (err) {
-      console.error("Watch Later toggle error:", err);
-      setErrorMessage("Failed to update watch later list.");
-      setTimeout(() => setErrorMessage(""), 3000);
-    }
-  }, [watchLaterMovieIds, userId, navigate]);
+    },
+    [favouriteMovieIds, userId, navigate]
+  );
+
+  const toggleWatchLater = useCallback(
+    async (movie, event) => {
+      event.stopPropagation();
+      if (!userId) {
+        navigate("/login");
+        return;
+      }
+      try {
+        const isAdded = watchLaterMovieIds.includes(movie.id);
+        let updatedIds;
+
+        if (isAdded) {
+          updatedIds = watchLaterMovieIds.filter((id) => id !== movie.id);
+          setWatchLaterMovieIds(updatedIds);
+        } else {
+          updatedIds = [...watchLaterMovieIds, movie.id];
+          setWatchLaterMovieIds(updatedIds);
+        }
+
+        const endpoint = isAdded
+          ? `${API_BASE_URL}/api/watchlater/${movie.id}?userId=${userId}`
+          : `${API_BASE_URL}/api/watchlater/add`;
+
+        const response = await fetch(endpoint, {
+          method: isAdded ? "DELETE" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: isAdded
+            ? null
+            : JSON.stringify({
+                userId,
+                movieId: movie.id,
+                title: movie.title,
+                poster_path: movie.poster_path,
+              }),
+        });
+
+        if (!response.ok) {
+          const wlResponse = await fetch(
+            `${API_BASE_URL}/api/watchlater/list/${userId}`
+          );
+          const wlData = await wlResponse.json();
+          setWatchLaterMovieIds(wlData.map((item) => item.movieId));
+          throw new Error(
+            `Failed to ${isAdded ? "remove" : "add"} watch later`
+          );
+        }
+      } catch (err) {
+        console.error("Watch Later toggle error:", err);
+        setErrorMessage("Failed to update watch later list.");
+        setTimeout(() => setErrorMessage(""), 3000);
+      }
+    },
+    [watchLaterMovieIds, userId, navigate]
+  );
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -442,7 +458,12 @@ const Trending = () => {
   const applyFilters = useCallback(async () => {
     setLoading(true);
     try {
-      const allMovies = await fetchMovies("", selectedGenre, "", "revenue.desc");
+      const allMovies = await fetchMovies(
+        "",
+        selectedGenre,
+        "",
+        "revenue.desc"
+      );
       const filtered = allMovies.filter((movie) => {
         const movieYear = movie.release_date?.split("-")[0];
         const matchesYear = releaseYear ? movieYear === releaseYear : true;
@@ -512,29 +533,33 @@ const Trending = () => {
 
   const formatRevenue = (revenue) => {
     if (!revenue) return "N/A";
-    if (revenue >= 1000000000)
-      return `$${(revenue / 1000000000).toFixed(1)}B`;
+    if (revenue >= 1000000000) return `$${(revenue / 1000000000).toFixed(1)}B`;
     if (revenue >= 1000000) return `$${(revenue / 1000000).toFixed(1)}M`;
     if (revenue >= 1000) return `$${(revenue / 1000).toFixed(1)}K`;
     return `$${revenue}`;
   };
 
-  const showMovieDetails = useCallback(async (movieId) => {
-    try {
-      const movie = await fetchMovieDetails(movieId);
-      const trailer = await fetchMovieTrailer(movieId);
-      setSelectedMovie(movie);
-      setTrailerKey(trailer || "");
-      fetchComments(movieId);
-    } catch (error) {
-      console.error("Failed to load movie details:", error);
-      setErrorMessage("Failed to load movie details.");
-      setTimeout(() => setErrorMessage(""), 3000);
-    }
-  }, [fetchComments]);
+  const showMovieDetails = useCallback(
+    async (movieId) => {
+      try {
+        const movie = await fetchMovieDetails(movieId);
+        const trailer = await fetchMovieTrailer(movieId);
+        setSelectedMovie(movie);
+        setTrailerKey(trailer || "");
+        fetchComments(movieId);
+      } catch (error) {
+        console.error("Failed to load movie details:", error);
+        setErrorMessage("Failed to load movie details.");
+        setTimeout(() => setErrorMessage(""), 3000);
+      }
+    },
+    [fetchComments]
+  );
 
   const averageRating = comments.length
-    ? (comments.reduce((sum, c) => sum + c.rating, 0) / comments.length).toFixed(1)
+    ? (
+        comments.reduce((sum, c) => sum + c.rating, 0) / comments.length
+      ).toFixed(1)
     : "N/A";
 
   return (
@@ -616,8 +641,12 @@ const Trending = () => {
                 onClick={() => showMovieDetails(movie.id)}
                 role="button"
                 tabIndex={0}
-                onKeyPress={(e) => e.key === "Enter" && showMovieDetails(movie.id)}
-                aria-label={`View details for ${movie.title}, ranked ${index + 1}`}
+                onKeyPress={(e) =>
+                  e.key === "Enter" && showMovieDetails(movie.id)
+                }
+                aria-label={`View details for ${movie.title}, ranked ${
+                  index + 1
+                }`}
               >
                 <RankBadge aria-hidden="true">{index + 1}</RankBadge>
                 <MovieImage
@@ -727,23 +756,32 @@ const Trending = () => {
                 </p>
                 <div
                   className="movie-details-grid"
-                  style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                  }}
                 >
                   <p>
-                    <strong>Release Date:</strong> {selectedMovie.release_date || "N/A"}
+                    <strong>Release Date:</strong>{" "}
+                    {selectedMovie.release_date || "N/A"}
                   </p>
                   <p>
-                    <strong>Rating:</strong> {selectedMovie.vote_average?.toFixed(1) || "N/A"}/10
+                    <strong>Rating:</strong>{" "}
+                    {selectedMovie.vote_average?.toFixed(1) || "N/A"}/10
                   </p>
                   <p>
-                    <strong>Runtime:</strong> {selectedMovie.runtime || "N/A"} mins
+                    <strong>Runtime:</strong> {selectedMovie.runtime || "N/A"}{" "}
+                    mins
                   </p>
                   <p>
                     <strong>Genres:</strong>{" "}
-                    {selectedMovie.genres?.map((g) => g.name).join(", ") || "N/A"}
+                    {selectedMovie.genres?.map((g) => g.name).join(", ") ||
+                      "N/A"}
                   </p>
                   <p>
-                    <strong>Revenue:</strong> {formatRevenue(selectedMovie.revenue)}
+                    <strong>Revenue:</strong>{" "}
+                    {formatRevenue(selectedMovie.revenue)}
                   </p>
                   <p>
                     <strong>Average User Rating:</strong> {averageRating}/5
@@ -786,7 +824,9 @@ const Trending = () => {
                       {[1, 2, 3, 4, 5].map((star) => (
                         <i
                           key={star}
-                          className={`bi bi-star${star <= rating ? "-fill" : ""}`}
+                          className={`bi bi-star${
+                            star <= rating ? "-fill" : ""
+                          }`}
                           style={{ cursor: "pointer", fontSize: "1.3rem" }}
                           onClick={() => setRating(star)}
                         ></i>
@@ -835,9 +875,16 @@ const Trending = () => {
 
                           {/* Content */}
                           <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center mb-1" style={{ paddingRight: '20px' }}>
-                              <strong style={{ color: "#e5e5e5" }}>{comment.user}</strong>
-                              <small style={{ color: 'white', fontSize: '0.75rem' }}>
+                            <div
+                              className="d-flex justify-content-between align-items-center mb-1"
+                              style={{ paddingRight: "20px" }}
+                            >
+                              <strong style={{ color: "#e5e5e5" }}>
+                                {comment.user}
+                              </strong>
+                              <small
+                                style={{ color: "white", fontSize: "0.75rem" }}
+                              >
                                 {new Date(comment.createdAt).toLocaleString()}
                               </small>
                             </div>
@@ -853,8 +900,13 @@ const Trending = () => {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <i
                                       key={star}
-                                      className={`bi bi-star${star <= editRating ? "-fill" : ""}`}
-                                      style={{ cursor: "pointer", fontSize: "1.3rem" }}
+                                      className={`bi bi-star${
+                                        star <= editRating ? "-fill" : ""
+                                      }`}
+                                      style={{
+                                        cursor: "pointer",
+                                        fontSize: "1.3rem",
+                                      }}
                                       onClick={() => setEditRating(star)}
                                     ></i>
                                   ))}
@@ -881,14 +933,21 @@ const Trending = () => {
                                   {[1, 2, 3, 4, 5].map((star) => (
                                     <i
                                       key={star}
-                                      className={`bi bi-star${star <= comment.rating ? "-fill" : ""}`}
-                                      style={{ color: "#f5c518", marginRight: "2px" }}
+                                      className={`bi bi-star${
+                                        star <= comment.rating ? "-fill" : ""
+                                      }`}
+                                      style={{
+                                        color: "#f5c518",
+                                        marginRight: "2px",
+                                      }}
                                     ></i>
                                   ))}
                                 </div>
 
                                 {/* Comment text */}
-                                <p className="mb-0 text-light">{comment.text}</p>
+                                <p className="mb-0 text-light">
+                                  {comment.text}
+                                </p>
                               </>
                             )}
                           </div>
@@ -917,7 +976,9 @@ const Trending = () => {
                                   <button
                                     className="dropdown-item text-white"
                                     style={{ backgroundColor: "#2c2c2c" }}
-                                    onClick={() => handleEditClick(comment._id, comment.text)}
+                                    onClick={() =>
+                                      handleEditClick(comment._id, comment.text)
+                                    }
                                   >
                                     Edit
                                   </button>
@@ -932,13 +993,13 @@ const Trending = () => {
                               )}
                             </div>
                           )}
-
                         </div>
                       ))
                     ) : (
-                      <p className="text-muted">No comments yet. Be the first!</p>
+                      <p className="text-muted">
+                        No comments yet. Be the first!
+                      </p>
                     )}
-
                   </div>
                 </div>
               </div>
@@ -946,6 +1007,9 @@ const Trending = () => {
           </ModalContent>
         </ModalOverlay>
       )}
+      <footer className="landing-footer">
+        <p>&copy; {new Date().getFullYear()} CineMatch. All rights reserved.</p>
+      </footer>
     </PageContainer>
   );
 };

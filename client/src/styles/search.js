@@ -140,5 +140,13 @@ style.innerHTML = `
   margin-top: 1rem;
 }
 
+  .landing-footer {
+    background-color: #111;
+    color: #aaa;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+
 `;
 document.head.appendChild(style);
